@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context"; // ✅ thêm dòng này
 import { hotels } from "./HotelData";
 
 export default function HotelDetailScreen() {
@@ -11,75 +11,70 @@ export default function HotelDetailScreen() {
 
   if (!hotel) {
     return (
-      <View style={styles.centered}>
+      <SafeAreaView style={styles.centered}>
         <Text>Không tìm thấy khách sạn 🥲</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{hotel.name}</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        {/* Hình ảnh khách sạn */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+          {hotel.images.map((img, idx) => (
+            <Image key={idx} source={{ uri: img }} style={styles.image} />
+          ))}
+        </ScrollView>
 
-      {/* Hình ảnh khách sạn */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-        {hotel.images.map((img, idx) => (
-          <Image key={idx} source={{ uri: img }} style={styles.image} />
-        ))}
-      </ScrollView>
+        {/* Điểm nổi bật */}
+        <Text style={styles.sectionTitle}>Điểm nổi bật của chỗ nghỉ</Text>
+        <View style={styles.highlightContainer}>
+          {hotel.highlights.map((item, idx) => (
+            <View key={idx} style={styles.highlightItem}>
+              <Text style={styles.highlightText}>{item}</Text>
+            </View>
+          ))}
+        </View>
 
-      {/* Điểm nổi bật */}
-      <Text style={styles.sectionTitle}>Điểm nổi bật của chỗ nghỉ</Text>
-      <View style={styles.highlightContainer}>
-        {hotel.highlights.map((item, idx) => (
-          <View key={idx} style={styles.highlightItem}>
-            <Text style={styles.highlightText}>{item}</Text>
+        {/* Mô tả */}
+        <Text style={styles.description}>{hotel.description}</Text>
+
+        {/* Ngày nhận & trả phòng */}
+        <View style={styles.infoSection}>
+          <View>
+            <Text style={styles.infoLabel}>Nhận phòng</Text>
+            <Text style={styles.infoValue}>{hotel.checkIn}</Text>
           </View>
-        ))}
-      </View>
-
-      {/* Mô tả */}
-      <Text style={styles.description}>{hotel.description}</Text>
-
-      {/* Ngày nhận & trả phòng */}
-      <View style={styles.infoSection}>
-        <View>
-          <Text style={styles.infoLabel}>Nhận phòng</Text>
-          <Text style={styles.infoValue}>{hotel.checkIn}</Text>
+          <View>
+            <Text style={styles.infoLabel}>Trả phòng</Text>
+            <Text style={styles.infoValue}>{hotel.checkOut}</Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.infoLabel}>Trả phòng</Text>
-          <Text style={styles.infoValue}>{hotel.checkOut}</Text>
+
+        {/* Tóm tắt tìm kiếm */}
+        <Text style={styles.searchInfo}>{hotel.searchInfo}</Text>
+
+        {/* Ưu đãi */}
+        <View style={styles.promoContainer}>
+          <Text style={styles.discount}>{hotel.discount}</Text>
+          <Text style={styles.promo}>{hotel.promo}</Text>
         </View>
-      </View>
 
-      {/* Tóm tắt tìm kiếm */}
-      <Text style={styles.searchInfo}>{hotel.searchInfo}</Text>
+        {/* Chính sách */}
+        <Text style={styles.freeCancel}>{hotel.freeCancel}</Text>
 
-      {/* Ưu đãi */}
-      <View style={styles.promoContainer}>
-        <Text style={styles.discount}>{hotel.discount}</Text>
-        <Text style={styles.promo}>{hotel.promo}</Text>
-      </View>
-
-      {/* Chính sách */}
-      <Text style={styles.freeCancel}>{hotel.freeCancel}</Text>
-
-      {/* Nút hành động */}
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Xem các lựa chọn</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Nút hành động */}
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Xem các lựa chọn</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, backgroundColor: "#fff" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {

@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context"; // ✅ import đúng thư viện
 
 export default function ReserveScreen() {
   const router = useRouter();
@@ -10,40 +11,43 @@ export default function ReserveScreen() {
   const [room, setRoom] = useState("");
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Đặt vé cho: {destination || "Địa điểm"}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Đặt vé cho: {destination || "Địa điểm"}</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Chọn ngày đi (VD: 2025-11-02)"
-        value={date}
-        onChangeText={setDate}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Chọn ngày đi (VD: 2025-11-02)"
+          value={date}
+          onChangeText={setDate}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Chọn loại phòng"
-        value={room}
-        onChangeText={setRoom}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Chọn loại phòng"
+          value={room}
+          onChangeText={setRoom}
+        />
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() =>
-          router.push({
-            pathname: "/SearchResultScreen",
-            params: { date, room, destination },
-          })
-        }
-      >
-        <Text style={styles.buttonText}>Tìm</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            router.push({
+              pathname: "/SearchResultScreen",
+              params: { date, room, destination },
+            })
+          }
+        >
+          <Text style={styles.buttonText}>Tìm</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  safeArea: { flex: 1, backgroundColor: "#fff" }, // ✅ Safe area style
+  container: { flex: 1, padding: 20 },
   title: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
   input: {
     borderWidth: 1,

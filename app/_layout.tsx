@@ -24,6 +24,10 @@ export default function RootLayout() {
         name="details/[id]"
         options={{ title: "Place Details" }}
       />
+      <Stack.Screen
+      name="(reserve)"
+      options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

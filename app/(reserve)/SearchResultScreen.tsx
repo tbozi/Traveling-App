@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import React from "react";
 import {
   FlatList,
   Image,
@@ -17,7 +16,7 @@ const hotels = [
     image:
       "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736774.jpg?k=123",
     price: 450000,
-    rating: 8.7,
+    rating: 4.3,
   },
   {
     id: "2",
@@ -26,7 +25,7 @@ const hotels = [
     image:
       "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736776.jpg?k=456",
     price: 890000,
-    rating: 9.1,
+    rating: 4.9,
   },
   {
     id: "3",
@@ -35,7 +34,7 @@ const hotels = [
     image:
       "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736777.jpg?k=789",
     price: 720000,
-    rating: 8.4,
+    rating: 4.2,
   },
 ];
 

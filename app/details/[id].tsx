@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const FRIEND_API_URL = "https://68ff4999e02b16d1753d49db.mockapi.io";
 const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
 
@@ -40,7 +40,7 @@ const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
     {[1, 2, 3, 4, 5].map((star) => (
       <Feather
-        key={star}
+        key={`star-${star}`}
         name="star"
         size={16}
         color={star <= rating ? "#FFD700" : "#ccc"}
@@ -101,22 +101,20 @@ export default function PlaceDetailScreen() {
     fetchReviews();
   }, [id]);
 
-  // 🌀 Khi đang tải
   if (loading) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#1E90FF" />
         <Text>Đang tải chi tiết...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  // ❌ Không có dữ liệu
   if (!place) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center}>
         <Text>Không tìm thấy địa điểm 🥲</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -126,80 +124,89 @@ export default function PlaceDetailScreen() {
       : place.price;
 
   return (
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: place.image }} style={styles.image} />
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container}>
+        <Image source={{ uri: place.image }} style={styles.image} />
 
-      <View style={styles.content}>
-        <Text style={styles.title}>{place.title}</Text>
-        <Text style={styles.location}>{place.location}</Text>
+        <View style={styles.content}>
+          <Text style={styles.title}>{place.title}</Text>
+          <Text style={styles.location}>{place.location}</Text>
 
-        {place.discount && place.discount > 0 ? (
-          <>
-            <Text style={styles.oldPrice}>
-              {place.price.toLocaleString()}₫
-            </Text>
-            <Text style={styles.newPrice}>
-              {discountedPrice.toLocaleString()}₫ (-{place.discount}%)
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.newPrice}>{place.price.toLocaleString()}₫</Text>
-        )}
+          {place.discount && place.discount > 0 ? (
+            <>
+              <Text style={styles.oldPrice}>
+                {place.price.toLocaleString()}₫
+              </Text>
+              <Text style={styles.newPrice}>
+                {discountedPrice.toLocaleString()}₫ (-{place.discount}%)
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.newPrice}>{place.price.toLocaleString()}₫</Text>
+          )}
 
-        <Text style={styles.descTitle}>Giới thiệu</Text>
-        <Text style={styles.desc}>{place.desc}</Text>
+          <Text style={styles.descTitle}>Giới thiệu</Text>
+          <Text style={styles.desc}>{place.desc}</Text>
 
-        {/* ✏️ Viết đánh giá */}
-        <Pressable
-          style={styles.reviewButton}
+          {/* ✏️ Viết đánh giá */}
+          <Pressable
+            style={styles.reviewButton}
+            onPress={() =>
+              router.push({
+                pathname: "/modal/review",
+                params: {
+                  placeid: place.id,
+                  placeName: place.title,
+                },
+              })
+            }
+          >
+            <Feather name="edit-3" size={18} color="#fff" />
+            <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
+          </Pressable>
+
+          {/* 💬 Danh sách đánh giá */}
+          <View style={styles.reviewsContainer}>
+            <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
+            {reviewsLoading ? (
+              <ActivityIndicator
+                color="#1E90FF"
+                style={{ marginVertical: 20 }}
+              />
+            ) : reviews.length === 0 ? (
+              <Text style={styles.noReviewsText}>
+                Chưa có đánh giá nào cho địa điểm này.
+              </Text>
+            ) : (
+              reviews.map((review) => (
+                <ReviewItem key={review.id} review={review} />
+              ))
+            )}
+          </View>
+        </View>
+
+        {/* 🎟️ Nút đặt vé */}
+        <TouchableOpacity
+          style={styles.bookButton}
           onPress={() =>
             router.push({
-              pathname: "/modal/review",
-              params: {
-                placeid: place.id,
-                placeName: place.title,
-              },
+              pathname: "/(reserve)/ReseverScreen",
+              params: { id: place.id, destination: place.title },
             })
           }
         >
-          <Feather name="edit-3" size={18} color="#fff" />
-          <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
-        </Pressable>
-
-        {/* 💬 Danh sách đánh giá */}
-        <View style={styles.reviewsContainer}>
-          <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
-          {reviewsLoading ? (
-            <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
-          ) : reviews.length === 0 ? (
-            <Text style={styles.noReviewsText}>
-              Chưa có đánh giá nào cho địa điểm này.
-            </Text>
-          ) : (
-            reviews.map((review) => (
-              <ReviewItem key={review.id} review={review} />
-            ))
-          )}
-        </View>
-      </View>
-
-      {/* 🎟️ Nút đặt vé */}
-      <TouchableOpacity
-        style={styles.bookButton}
-        onPress={() =>
-          router.push({
-            pathname: "/(reserve)/ReseverScreen",
-            params: { id: place.id, destination: place.title },
-          })
-        }
-      >
-        <Text style={styles.bookButtonText}>Đặt vé</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <Text style={styles.bookButtonText}>Đặt vé</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   container: { flex: 1, backgroundColor: "#fff" },
   image: { width: "100%", height: 250 },
   content: { padding: 16, paddingBottom: 50 },

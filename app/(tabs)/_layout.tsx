@@ -27,7 +27,6 @@ export default function TabLayout() {
               break;
           }
 
-          // ✅ Sửa ở đây: dùng name, không phải iconName
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
