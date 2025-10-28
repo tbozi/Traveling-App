@@ -1,11 +1,14 @@
-import { useLocalSearchParams } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -32,6 +35,7 @@ interface Review {
   placeid: string;
 }
 
+// ⭐ Hiển thị sao
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
     {[1, 2, 3, 4, 5].map((star) => (
@@ -45,6 +49,7 @@ const StarDisplay = ({ rating }: { rating: number }) => (
   </View>
 );
 
+// 🧾 Một đánh giá
 const ReviewItem = ({ review }: { review: Review }) => (
   <View style={styles.reviewItem}>
     <Text style={styles.reviewAuthor}>{review.author}</Text>
@@ -59,15 +64,16 @@ export default function PlaceDetailScreen() {
 
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  // 🧭 Tải dữ liệu chi tiết khi có id
+  // 🧭 Tải dữ liệu chi tiết địa điểm
   useEffect(() => {
     if (!id) return;
 
     const fetchPlaceById = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
         const response = await fetch(`${FRIEND_API_URL}/places/${id}`);
         const data: Place = await response.json();
         setPlace(data);
@@ -78,10 +84,24 @@ export default function PlaceDetailScreen() {
       }
     };
 
+    const fetchReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews?placeid=${id}`);
+        const data: Review[] = await res.json();
+        setReviews(data);
+      } catch (err) {
+        console.error("❌ Lỗi tải đánh giá:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
     fetchPlaceById();
+    fetchReviews();
   }, [id]);
 
-  // 🌀 Hiển thị khi đang tải
+  // 🌀 Khi đang tải
   if (loading) {
     return (
       <View style={styles.center}>
@@ -91,6 +111,7 @@ export default function PlaceDetailScreen() {
     );
   }
 
+  // ❌ Không có dữ liệu
   if (!place) {
     return (
       <View style={styles.center}>
@@ -128,6 +149,7 @@ export default function PlaceDetailScreen() {
         <Text style={styles.descTitle}>Giới thiệu</Text>
         <Text style={styles.desc}>{place.desc}</Text>
 
+        {/* ✏️ Viết đánh giá */}
         <Pressable
           style={styles.reviewButton}
           onPress={() =>
@@ -144,13 +166,11 @@ export default function PlaceDetailScreen() {
           <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
         </Pressable>
 
+        {/* 💬 Danh sách đánh giá */}
         <View style={styles.reviewsContainer}>
           <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
           {reviewsLoading ? (
-            <ActivityIndicator
-              color="#1E90FF"
-              style={{ marginVertical: 20 }}
-            />
+            <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
           ) : reviews.length === 0 ? (
             <Text style={styles.noReviewsText}>
               Chưa có đánh giá nào cho địa điểm này.
@@ -163,7 +183,7 @@ export default function PlaceDetailScreen() {
         </View>
       </View>
 
-      {/* Nút đặt vé */}
+      {/* 🎟️ Nút đặt vé */}
       <TouchableOpacity
         style={styles.bookButton}
         onPress={() =>
@@ -190,5 +210,38 @@ const styles = StyleSheet.create({
   descTitle: { fontSize: 18, fontWeight: "600", marginTop: 16 },
   desc: { fontSize: 15, color: "#444", marginTop: 6, lineHeight: 22 },
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  reviewButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E90FF",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  reviewButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+  reviewsContainer: { marginTop: 20 },
+  reviewsTitle: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
+  reviewItem: {
+    backgroundColor: "#F4F6F8",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  reviewAuthor: { fontWeight: "600" },
+  reviewComment: { color: "#444", marginTop: 4 },
+  noReviewsText: { color: "#888", fontStyle: "italic" },
+  bookButton: {
+    backgroundColor: "#1E90FF",
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    margin: 16,
+    borderRadius: 10,
+  },
+  bookButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  starDisplay: { flexDirection: "row", marginVertical: 4 },
 });
-
