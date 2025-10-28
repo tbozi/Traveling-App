@@ -1,98 +1,181 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+interface Place {
+  id: string;
+  title: string;
+  location: string;
+  image: string;
+  price: number;
+  discount: number;
+  type: string;
+  desc: string;
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    loadFavorites();
+    fetchPlaces();
+  }, []);
+
+  const fetchPlaces = async () => {
+    try {
+      const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/places");
+      const data = await res.json();
+      setPlaces(data);
+    } catch (err) {
+      console.error("Lỗi tải API:", err);
+      // Alert chỉ hoạt động trên native, web bỏ Alert
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFavorites = async () => {
+    const data = await AsyncStorage.getItem("favorites");
+    if (data) setFavorites(JSON.parse(data));
+  };
+
+  const toggleFavorite = async (id: string) => {
+    let updatedFavorites: string[] = [];
+    if (favorites.includes(id)) {
+      updatedFavorites = favorites.filter((favId) => favId !== id);
+    } else {
+      updatedFavorites = [...favorites, id];
+    }
+    setFavorites(updatedFavorites);
+    await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+  };
+
+  const renderPlaceCard = ({ item }: { item: Place }) => {
+    const discountedPrice = item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
+
+    return (
+      <View style={styles.card}>
+        <TouchableOpacity onPress={() => toggleFavorite(item.id)} style={styles.heartBtn}>
+          <Ionicons
+            name={favorites.includes(item.id) ? "heart" : "heart-outline"}
+            size={22}
+            color={favorites.includes(item.id) ? "red" : "#333"}
+          />
+        </TouchableOpacity>
+
+        <Link href={{ pathname: "/details/[id]", params: { id: String(item.id) } }} asChild>
+          <TouchableOpacity>
+            <Image source={{ uri: item.image }} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.location}>{item.location}</Text>
+
+              {item.discount > 0 ? (
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceOld}>{item.price.toLocaleString()}₫</Text>
+                  <Text style={styles.priceNew}>{discountedPrice.toLocaleString()}₫ (-{item.discount}%)</Text>
+                </View>
+              ) : (
+                <Text style={styles.price}>{item.price.toLocaleString()}₫</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color="#1E90FF" />
+        <Text style={{ marginTop: 8 }}>Đang tải dữ liệu...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const hotPlaces = places.filter((p) => p.type === "hot");
+  const offerPlaces = places.filter((p) => p.type === "offer");
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Image
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/69/69906.png" }}
+              style={styles.logo}
+            />
+            <Text style={styles.titleHeader}>Traveling App</Text>
+          </View>
+          <Link href="/notifications" asChild>
+            <TouchableOpacity>
+              <Ionicons name="notifications-outline" size={26} color="#fff" />
+            </TouchableOpacity>
+          </Link>
+        </View>
+
+        <Text style={styles.sectionTitle}>🔥 Hot Destinations</Text>
+        <FlatList
+          data={hotPlaces}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPlaceCard}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        />
+
+        <Text style={styles.sectionTitle}>💸 Special Offers</Text>
+        <FlatList
+          data={offerPlaces}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={renderPlaceCard}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, backgroundColor: "#F5F7FA" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: "#1E90FF",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  headerLeft: { flexDirection: "row", alignItems: "center" },
+  logo: { width: 40, height: 40, marginRight: 10 },
+  titleHeader: { fontSize: 22, fontWeight: "bold", color: "#fff" },
+  sectionTitle: { fontSize: 20, fontWeight: "700", marginTop: 20, marginBottom: 10, marginLeft: 16 },
+  card: { backgroundColor: "#fff", borderRadius: 12, marginRight: 12, overflow: "hidden", width: 200, position: "relative" },
+  image: { width: "100%", height: 120 },
+  heartBtn: { position: "absolute", top: 8, right: 8, zIndex: 10, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 20, padding: 4 },
+  info: { padding: 8 },
+  title: { fontSize: 16, fontWeight: "600", marginTop: 4 },
+  location: { color: "#666", fontSize: 13 },
+  price: { color: "#1E90FF", fontWeight: "bold", marginTop: 4 },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  priceOld: { textDecorationLine: "line-through", color: "#999", fontSize: 13 },
+  priceNew: { color: "green", fontWeight: "700" },
 });
