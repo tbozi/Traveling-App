@@ -8,9 +8,9 @@ export const hotels = [
     latitude: 10.762622,
     longitude: 106.660172,
     images: [
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/565493917.jpg?k=a3e97e0e80",
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/565493918.jpg?k=45e97e0e70",
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/565493919.jpg?k=33e97e0e60"
+      "https://500px.com/photo/1118006890/reddorm-by-01.-huynh-van-hieu",
+      "https://500px.com/photo/1118006890/reddorm-by-01.-huynh-van-hieu",
+      "https://500px.com/photo/1118006889/reddorm2-by-01.-huynh-van-hieu"
     ],
     highlights: ["Chỗ đậu xe", "Tiện nghi nhà bếp"],
     description:
@@ -42,8 +42,8 @@ export const hotels = [
     latitude: 11.9416,
     longitude: 108.4383,
     images: [
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/123456789.jpg?k=123",
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/987654321.jpg?k=456"
+      "https://500px.com/photo/1118006891/blueocean-by-01.-huynh-van-hieu",
+      "https://500px.com/photo/1118006888/blueocean1-by-01.-huynh-van-hieu"
     ],
     highlights: ["Bãi biển riêng", "Hồ bơi ngoài trời"],
     description:

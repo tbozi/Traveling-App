@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // ✅ thêm dòng này
+import { SafeAreaView } from "react-native-safe-area-context";
 import { hotels } from "./HotelData";
 
 export default function HotelDetailScreen() {
@@ -20,14 +20,12 @@ export default function HotelDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
-        {/* Hình ảnh khách sạn */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
           {hotel.images.map((img, idx) => (
             <Image key={idx} source={{ uri: img }} style={styles.image} />
           ))}
         </ScrollView>
 
-        {/* Điểm nổi bật */}
         <Text style={styles.sectionTitle}>Điểm nổi bật của chỗ nghỉ</Text>
         <View style={styles.highlightContainer}>
           {hotel.highlights.map((item, idx) => (
@@ -37,10 +35,8 @@ export default function HotelDetailScreen() {
           ))}
         </View>
 
-        {/* Mô tả */}
         <Text style={styles.description}>{hotel.description}</Text>
 
-        {/* Ngày nhận & trả phòng */}
         <View style={styles.infoSection}>
           <View>
             <Text style={styles.infoLabel}>Nhận phòng</Text>
@@ -52,19 +48,15 @@ export default function HotelDetailScreen() {
           </View>
         </View>
 
-        {/* Tóm tắt tìm kiếm */}
         <Text style={styles.searchInfo}>{hotel.searchInfo}</Text>
 
-        {/* Ưu đãi */}
         <View style={styles.promoContainer}>
           <Text style={styles.discount}>{hotel.discount}</Text>
           <Text style={styles.promo}>{hotel.promo}</Text>
         </View>
 
-        {/* Chính sách */}
         <Text style={styles.freeCancel}>{hotel.freeCancel}</Text>
 
-        {/* Nút hành động */}
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Xem các lựa chọn</Text>
         </TouchableOpacity>

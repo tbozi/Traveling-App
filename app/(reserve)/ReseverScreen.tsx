@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // ✅ import đúng thư viện
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ReserveScreen() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function ReserveScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" }, // ✅ Safe area style
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 20 },
   title: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
   input: {

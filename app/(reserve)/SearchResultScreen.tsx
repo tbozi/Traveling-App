@@ -14,7 +14,7 @@ const hotels = [
     name: "Redhome Dorm",
     location: "TP. Hồ Chí Minh",
     image:
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736774.jpg?k=123",
+      "https://500px.com/photo/1118006889/reddorm2-by-01.-huynh-van-hieu",
     price: 450000,
     rating: 4.3,
   },
@@ -23,7 +23,7 @@ const hotels = [
     name: "The Saigon Hotel",
     location: "Quận 1, TP. Hồ Chí Minh",
     image:
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736776.jpg?k=456",
+      "https://500px.com/photo/1118007728/the-hotel-by-01.-huynh-van-hieu",
     price: 890000,
     rating: 4.9,
   },
@@ -32,7 +32,7 @@ const hotels = [
     name: "Golden Star Hotel",
     location: "Hà Nội",
     image:
-      "https://cf.bstatic.com/xdata/images/hotel/max1024x768/616736777.jpg?k=789",
+      "https://500px.com/photo/1118007627/golden-strt-by-01.-huynh-van-hieu",
     price: 720000,
     rating: 4.2,
   },

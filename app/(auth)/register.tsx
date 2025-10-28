@@ -19,7 +19,6 @@ export default function RegisterScreen() {
     }
 
     try {
-      // 🧠 Gửi request POST đến MockAPI
       const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

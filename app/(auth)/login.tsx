@@ -14,11 +14,9 @@ export default function LoginScreen() {
     }
 
     try {
-      // 🧠 Lấy danh sách user từ MockAPI
       const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users");
       const users = await res.json();
 
-      // Kiểm tra user tồn tại
       const user = users.find((u: any) => u.email === email && u.password === password);
 
       if (user) {

@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // ✅ import SafeAreaView
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Place {
   id: string;
@@ -52,20 +52,18 @@ export default function SearchScreen() {
 
   if (loading)
     return (
-      <SafeAreaView style={styles.loadingContainer}> {/* ✅ SafeAreaView */}
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1E90FF" />
         <Text>Đang tải dữ liệu...</Text>
       </SafeAreaView>
     );
 
   return (
-    <SafeAreaView style={styles.container}> {/* ✅ SafeAreaView bọc toàn màn hình */}
-      {/* HEADER */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tìm kiếm</Text>
       </View>
 
-      {/* SEARCH INPUT */}
       <TextInput
         placeholder="Tìm kiếm địa điểm..."
         value={query}
@@ -73,7 +71,6 @@ export default function SearchScreen() {
         style={styles.input}
       />
 
-      {/* LIST */}
       {filtered.length === 0 ? (
         <Text style={styles.emptyText}>Không tìm thấy địa điểm nào 😢</Text>
       ) : (

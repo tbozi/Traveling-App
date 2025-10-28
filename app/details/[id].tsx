@@ -35,7 +35,6 @@ interface Review {
   placeid: string;
 }
 
-// ⭐ Hiển thị sao
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
     {[1, 2, 3, 4, 5].map((star) => (
@@ -49,7 +48,6 @@ const StarDisplay = ({ rating }: { rating: number }) => (
   </View>
 );
 
-// 🧾 Một đánh giá
 const ReviewItem = ({ review }: { review: Review }) => (
   <View style={styles.reviewItem}>
     <Text style={styles.reviewAuthor}>{review.author}</Text>
@@ -67,7 +65,6 @@ export default function PlaceDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  // 🧭 Tải dữ liệu chi tiết địa điểm
   useEffect(() => {
     if (!id) return;
 
@@ -78,7 +75,7 @@ export default function PlaceDetailScreen() {
         const data: Place = await response.json();
         setPlace(data);
       } catch (error) {
-        console.error("❌ Lỗi tải dữ liệu chi tiết:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -91,7 +88,7 @@ export default function PlaceDetailScreen() {
         const data: Review[] = await res.json();
         setReviews(data);
       } catch (err) {
-        console.error("❌ Lỗi tải đánh giá:", err);
+        console.error(err);
       } finally {
         setReviewsLoading(false);
       }
@@ -148,7 +145,6 @@ export default function PlaceDetailScreen() {
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
-          {/* ✏️ Viết đánh giá */}
           <Pressable
             style={styles.reviewButton}
             onPress={() =>
@@ -165,7 +161,6 @@ export default function PlaceDetailScreen() {
             <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
           </Pressable>
 
-          {/* 💬 Danh sách đánh giá */}
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
             {reviewsLoading ? (
@@ -185,7 +180,6 @@ export default function PlaceDetailScreen() {
           </View>
         </View>
 
-        {/* 🎟️ Nút đặt vé */}
         <TouchableOpacity
           style={styles.bookButton}
           onPress={() =>
@@ -203,10 +197,7 @@ export default function PlaceDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, backgroundColor: "#fff" },
   image: { width: "100%", height: 250 },
   content: { padding: 16, paddingBottom: 50 },
@@ -225,11 +216,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
   },
-  reviewButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    marginLeft: 6,
-  },
+  reviewButtonText: { color: "#fff", fontWeight: "600", marginLeft: 6 },
   reviewsContainer: { marginTop: 20 },
   reviewsTitle: { fontSize: 18, fontWeight: "600", marginBottom: 8 },
   reviewItem: {
