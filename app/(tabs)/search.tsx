@@ -12,6 +12,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+<<<<<<< Updated upstream
+=======
+
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../js/config"; // ✅ Firebase config
+>>>>>>> Stashed changes
 
 interface Place {
   id: string;
@@ -35,12 +41,17 @@ export default function SearchScreen() {
 
   const fetchPlaces = async () => {
     try {
-      const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/places");
-      const data = await res.json();
+      const snap = await getDocs(collection(db, "places"));
+
+      const data: Place[] = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Place[];
+
       setPlaces(data);
     } catch (error) {
-      console.error("Lỗi tải API:", error);
-      Alert.alert("Không thể tải dữ liệu từ server!");
+      console.error("Lỗi Firebase:", error);
+      Alert.alert("Không thể tải dữ liệu từ Firestore!");
     } finally {
       setLoading(false);
     }
@@ -79,7 +90,9 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
             const discountedPrice =
-              item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
+              item.discount > 0
+                ? item.price * (1 - item.discount / 100)
+                : item.price;
 
             return (
               <Link
@@ -91,6 +104,7 @@ export default function SearchScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.title}>{item.title}</Text>
                     <Text style={styles.location}>{item.location}</Text>
+
                     {item.discount > 0 ? (
                       <View style={styles.priceRow}>
                         <Text style={styles.priceOld}>
@@ -148,9 +162,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: "600" },
   location: { fontSize: 13, color: "#666", marginBottom: 4 },
   priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  price: { color: "#1E90FF", fontWeight: "bold" },
   priceOld: { textDecorationLine: "line-through", color: "#999", fontSize: 12 },
   priceNew: { color: "green", fontWeight: "700", fontSize: 14 },
+  price: { color: "#1E90FF", fontWeight: "bold" },
   emptyText: { textAlign: "center", marginTop: 30, fontSize: 16, color: "#666" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

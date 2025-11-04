@@ -1,5 +1,8 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -7,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+<<<<<<< Updated upstream
 
 const hotels = [
   {
@@ -37,9 +41,57 @@ const hotels = [
     rating: 4.2,
   },
 ];
+=======
+import { db } from "../js/config";
+>>>>>>> Stashed changes
 
 export default function SearchResultScreen() {
   const router = useRouter();
+  const { destination } = useLocalSearchParams<{ destination: string }>();
+
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        setLoading(true);
+        const querySnapshot = await getDocs(collection(db, "hotels"));
+        const allHotels: any[] = [];
+        querySnapshot.forEach((doc) => allHotels.push({ id: doc.id, ...doc.data() }));
+
+        // 🔍 Lọc theo "chuỗi chứa" (case-insensitive)
+        const filtered = allHotels.filter((h) =>
+          h.location?.toLowerCase().includes(destination?.toLowerCase() || "")
+        );
+
+        setHotels(filtered);
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu khách sạn:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (destination) fetchHotels();
+  }, [destination]);
+
+  if (loading)
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#2563EB" />
+        <Text>Đang tải dữ liệu khách sạn...</Text>
+      </View>
+    );
+
+  if (hotels.length === 0)
+    return (
+      <View style={styles.loading}>
+        <Text style={{ fontSize: 18, color: "#888" }}>
+          Không tìm thấy khách sạn tại {destination}.
+        </Text>
+      </View>
+    );
 
   const renderHotel = ({ item }: any) => (
     <TouchableOpacity
@@ -63,19 +115,13 @@ export default function SearchResultScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Kết quả tìm kiếm khách sạn</Text>
-      <FlatList
-        data={hotels}
-        renderItem={renderHotel}
-        keyExtractor={(item) => item.id}
-      />
+      <FlatList data={hotels} renderItem={renderHotel} keyExtractor={(i) => i.id} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 10 },
-  header: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
   card: {
     flexDirection: "row",
     backgroundColor: "#fafafa",
@@ -90,4 +136,5 @@ const styles = StyleSheet.create({
   location: { color: "#555", marginVertical: 4 },
   price: { color: "#007bff", fontWeight: "600" },
   rating: { color: "#f39c12", marginTop: 4 },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

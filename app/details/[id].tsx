@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,8 +13,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const FRIEND_API_URL = "https://68ff4999e02b16d1753d49db.mockapi.io";
-const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
+import { db } from "../js/config"; // đường dẫn tới firebase config của bạn
+
+
 
 interface Place {
   id: string;
@@ -28,7 +30,7 @@ interface Place {
 
 interface Review {
   id: string;
-  createdAt: string;
+  createAt: string;
   author: string;
   rating: number;
   comment: string;
@@ -66,8 +68,9 @@ export default function PlaceDetailScreen() {
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+  if (!id) return;
 
+<<<<<<< Updated upstream
     const fetchPlaceById = async () => {
       try {
         setLoading(true);
@@ -78,9 +81,24 @@ export default function PlaceDetailScreen() {
         console.error(error);
       } finally {
         setLoading(false);
-      }
-    };
+=======
+  const fetchPlaceAndReviews = async () => {
+    try {
+      setLoading(true);
+      setReviewsLoading(true);
 
+      // 👉 Lấy place theo ID
+      const placeRef = doc(db, "places", id);
+      const placeSnap = await getDoc(placeRef);
+
+      if (placeSnap.exists()) {
+        setPlace({ id: placeSnap.id, ...placeSnap.data() } as Place);
+      } else {
+        setPlace(null);
+>>>>>>> Stashed changes
+      }
+
+<<<<<<< Updated upstream
     const fetchReviews = async () => {
       try {
         setReviewsLoading(true);
@@ -93,10 +111,30 @@ export default function PlaceDetailScreen() {
         setReviewsLoading(false);
       }
     };
+=======
+      // 👉 Lấy reviews theo placeid
+      const reviewsRef = collection(db, "reviews");
+      const q = query(reviewsRef, where("placeid", "==", id));
+      const querySnap = await getDocs(q);
 
-    fetchPlaceById();
-    fetchReviews();
-  }, [id]);
+      const reviewsData: Review[] = querySnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Review[];
+
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error("❌ Firebase error:", error);
+    } finally {
+      setLoading(false);
+      setReviewsLoading(false);
+    }
+  };
+
+  fetchPlaceAndReviews();
+}, [id]);
+>>>>>>> Stashed changes
+
 
   if (loading) {
     return (
