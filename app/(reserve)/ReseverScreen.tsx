@@ -1,11 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-<<<<<<< Updated upstream
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-=======
 import {
   StyleSheet,
   Text,
@@ -15,7 +10,7 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
->>>>>>> Stashed changes
+
 export default function ReserveScreen() {
   const router = useRouter();
   const { destination } = useLocalSearchParams<{ destination: string }>();
@@ -197,5 +192,3 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 });
-
-

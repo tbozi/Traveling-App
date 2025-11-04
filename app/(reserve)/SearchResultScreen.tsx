@@ -10,40 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-<<<<<<< Updated upstream
-
-const hotels = [
-  {
-    id: "1",
-    name: "Redhome Dorm",
-    location: "TP. Hồ Chí Minh",
-    image:
-      "https://500px.com/photo/1118006889/reddorm2-by-01.-huynh-van-hieu",
-    price: 450000,
-    rating: 4.3,
-  },
-  {
-    id: "2",
-    name: "The Saigon Hotel",
-    location: "Quận 1, TP. Hồ Chí Minh",
-    image:
-      "https://500px.com/photo/1118007728/the-hotel-by-01.-huynh-van-hieu",
-    price: 890000,
-    rating: 4.9,
-  },
-  {
-    id: "3",
-    name: "Golden Star Hotel",
-    location: "Hà Nội",
-    image:
-      "https://500px.com/photo/1118007627/golden-strt-by-01.-huynh-van-hieu",
-    price: 720000,
-    rating: 4.2,
-  },
-];
-=======
 import { db } from "../js/config";
->>>>>>> Stashed changes
 
 export default function SearchResultScreen() {
   const router = useRouter();

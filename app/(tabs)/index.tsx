@@ -22,8 +22,6 @@ interface Place {
   title: string;
   location: string;
   image: string;
-  price: number;
-  discount: number;
   type: string;
   desc: string;
 }
@@ -33,14 +31,13 @@ export default function HomeScreen() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-
-const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
-  { icon: "airplane-outline", label: "Flights" },
-  { icon: "bed-outline", label: "Hotels" },
-  { icon: "navigate-outline", label: "Trips" },
-  { icon: "restaurant-outline", label: "Food" },
-  { icon: "car-outline", label: "Rent Car" },
-];
+  const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+    { icon: "airplane-outline", label: "Flights" },
+    { icon: "bed-outline", label: "Hotels" },
+    { icon: "navigate-outline", label: "Trips" },
+    { icon: "restaurant-outline", label: "Food" },
+    { icon: "car-outline", label: "Rent Car" },
+  ];
 
   useEffect(() => {
     loadFavorites();
@@ -48,37 +45,32 @@ const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   }, []);
 
   useFocusEffect(
-  useCallback(() => {
-    loadFavorites(); // ✅ tải lại favorites khi quay lại Home
-  }, [])
-);
-
+    useCallback(() => {
+      loadFavorites();
+    }, [])
+  );
 
   const fetchPlaces = async () => {
-  try {
-    const snapshot = await getDocs(collection(db, "places"));
-    const data = snapshot.docs.map((doc) => {
-      const d = doc.data();
-      return {
-        id: doc.id,
-        title: d.title,
-        location: d.location,       // Firestore field → app field
-        image: d.image,         // Firestore field → app field
-        price: d.price,
-        discount: d.discount,
-        type: d.type,             // hot / offer
-        desc: d.desc,
-      };
-    });
-
-    setPlaces(data);
-  } catch (err) {
-    console.log("🔥 Firebase error: ", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+    try {
+      const snapshot = await getDocs(collection(db, "places"));
+      const data = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          title: d.title,
+          location: d.location,
+          image: d.image,
+          type: d.type,
+          desc: d.desc,
+        };
+      });
+      setPlaces(data);
+    } catch (err) {
+      console.log("🔥 Firebase error: ", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadFavorites = async () => {
     const data = await AsyncStorage.getItem("favorites");
@@ -97,8 +89,6 @@ const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   };
 
   const renderPlaceCard = ({ item }: { item: Place }) => {
-    const discountedPrice = item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
-
     return (
       <View style={styles.card}>
         <TouchableOpacity onPress={() => toggleFavorite(item.id)} style={styles.heartBtn}>
@@ -115,15 +105,7 @@ const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.location}>{item.location}</Text>
-
-              {item.discount > 0 ? (
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceOld}>{item.price.toLocaleString()}₫</Text>
-                  <Text style={styles.priceNew}>{discountedPrice.toLocaleString()}₫ (-{item.discount}%)</Text>
-                </View>
-              ) : (
-                <Text style={styles.price}>{item.price.toLocaleString()}₫</Text>
-              )}
+              <Text style={styles.more}>Xem chi tiết →</Text>
             </View>
           </TouchableOpacity>
         </Link>
@@ -134,7 +116,7 @@ const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#1E90FF" />
+        <ActivityIndicator size="large" />
         <Text style={{ marginTop: 8 }}>Đang tải dữ liệu...</Text>
       </SafeAreaView>
     );
@@ -160,24 +142,21 @@ const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
             </TouchableOpacity>
           </Link>
         </View>
-        {/* 🔍 Search Bar */}
-<View style={styles.searchBox}>
-  <Ionicons name="search" size={20} color="#888" />
-  <Text style={{ marginLeft: 8, color: "#666" }}>Search destination...</Text>
-</View>
 
-{/* 🏖️ Categories */}
-<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
-  {categories.map((c, i) => (
-    <View key={i} style={styles.categoryItem}>
-      <Ionicons name={c.icon} size={28} />
-      <Text style={styles.categoryText}>{c.label}</Text>
-    </View>
-  ))}
-</ScrollView>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color="#888" />
+          <Text style={{ marginLeft: 8, color: "#666" }}>Search destination...</Text>
+        </View>
 
-{/* 🎉 Promo Banner */}
-<View style={styles.banner}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
+          {categories.map((c, i) => (
+            <View key={i} style={styles.categoryItem}>
+              <Ionicons name={c.icon} size={28} />
+              <Text style={styles.categoryText}>{c.label}</Text>
+            </View>
+          ))}
+        </ScrollView>
+        <View style={styles.banner}>
   <Image
     source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
     style={styles.bannerImg}
@@ -233,36 +212,33 @@ const styles = StyleSheet.create({
   info: { padding: 8 },
   title: { fontSize: 16, fontWeight: "600", marginTop: 4 },
   location: { color: "#666", fontSize: 13 },
-  price: { color: "#1E90FF", fontWeight: "bold", marginTop: 4 },
-  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  priceOld: { textDecorationLine: "line-through", color: "#999", fontSize: 13 },
-  priceNew: { color: "green", fontWeight: "700" },
+  more: { marginTop: 6, fontWeight: "600", color: "#1E90FF" },
   searchBox: {
-  flexDirection: "row",
-  backgroundColor: "#fff",
-  padding: 12,
-  borderRadius: 12,
-  marginHorizontal: 16,
-  marginTop: 12,
-  alignItems: "center",
-  borderWidth: 1,
-  borderColor: "#e2e8f0",
-},
-categoryRow: {
-  marginTop: 16,
-  paddingHorizontal: 16,
-},
-categoryItem: {
-  alignItems: "center",
-  marginRight: 20,
-},
-categoryText: {
-  marginTop: 4,
-  fontSize: 12,
-  fontWeight: "500",
-  color: "#444",
-},
-banner: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  categoryRow: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  categoryItem: {
+    alignItems: "center",
+    marginRight: 20,
+  },
+  categoryText: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#444",
+  },
+  banner: {
   marginTop: 18,
   marginHorizontal: 16,
   borderRadius: 14,
@@ -285,5 +261,4 @@ bannerSub: {
   color: "#eee",
   marginTop: 4,
 },
-
 });
