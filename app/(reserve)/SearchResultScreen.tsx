@@ -26,6 +26,7 @@ export default function SearchResultScreen() {
         setLoading(true);
         const querySnapshot = await getDocs(collection(db, "hotels"));
         const allHotels: any[] = [];
+
         querySnapshot.forEach((doc) =>
           allHotels.push({ id: doc.id, ...doc.data() })
         );
@@ -37,6 +38,7 @@ export default function SearchResultScreen() {
           const locationNormalized = removeAccents(h.location || "").toLowerCase();
           return locationNormalized.includes(destNormalized);
         });
+
 
         setHotels(filtered);
       } catch (error) {
@@ -90,11 +92,13 @@ export default function SearchResultScreen() {
 
   return (
     <View style={styles.container}>
+
       <FlatList
         data={hotels}
         renderItem={renderHotel}
         keyExtractor={(i) => i.id}
       />
+
     </View>
   );
 }

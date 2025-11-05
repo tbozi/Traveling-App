@@ -156,6 +156,17 @@ export default function HomeScreen() {
             </View>
           ))}
         </ScrollView>
+        <View style={styles.banner}>
+  <Image
+    source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
+    style={styles.bannerImg}
+  />
+  <View style={styles.bannerTextBox}>
+    <Text style={styles.bannerTitle}>Special Deal!</Text>
+    <Text style={styles.bannerSub}>Up to 50% on holidays this week</Text>
+  </View>
+</View>
+
 
         <Text style={styles.sectionTitle}>🔥 Hot Destinations</Text>
         <FlatList
@@ -228,4 +239,29 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#444",
   },
+
+  banner: {
+  marginTop: 18,
+  marginHorizontal: 16,
+  borderRadius: 14,
+  overflow: "hidden",
+  position: "relative",
+},
+bannerImg: { width: "100%", height: 150 },
+bannerTextBox: {
+  position: "absolute",
+  bottom: 15,
+  left: 15,
+},
+bannerTitle: {
+  fontSize: 20,
+  fontWeight: "700",
+  color: "#fff",
+},
+bannerSub: {
+  fontSize: 14,
+  color: "#eee",
+  marginTop: 4,
+},
+
 });

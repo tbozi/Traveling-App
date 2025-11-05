@@ -13,8 +13,6 @@ interface Place {
   title: string;
   location: string;
   image: string;
-  price: number;
-  discount?: number;
   type: string;
   desc: string;
 }
@@ -23,7 +21,6 @@ export default function FavoritesScreen() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-
 const fetchPlaces = async () => {
   try {
     const snapshot = await getDocs(collection(db, "places"));
@@ -55,6 +52,13 @@ const removeFavorite = async (id: string) => {
   setFavorites(updated);
   await AsyncStorage.setItem("favorites", JSON.stringify(updated));
 };
+
+
+  const removeFavorite = async (id: string) => {
+    const updated = favorites.filter((fid) => fid !== id);
+    setFavorites(updated);
+    await AsyncStorage.setItem("favorites", JSON.stringify(updated));
+  };
 
   const loadFavorites = async () => {
     const data = await AsyncStorage.getItem("favorites");
@@ -135,6 +139,7 @@ const removeFavorite = async (id: string) => {
   );
 }}
 
+
           contentContainerStyle={{ padding: 12 }}
         />
       )}
@@ -165,5 +170,16 @@ const styles = StyleSheet.create({
   padding: 4,
   borderRadius: 20,
 },
+
+
+  favoriteBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    padding: 4,
+    borderRadius: 20,
+  },
 
 });

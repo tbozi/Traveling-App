@@ -13,7 +13,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../js/config";
+
+import { db } from "../js/config"; // ✅ Đảm bảo đúng path Firebase config
 
 interface Place {
   id: string;
@@ -36,12 +37,12 @@ interface Review {
 // ⭐ Hiển thị sao
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
-    {[1, 2, 3, 4, 5].map((star) => (
+    {[1, 2, 3, 4, 5].map((s) => (
       <Feather
-        key={`star-${star}`}
+        key={s}
         name="star"
         size={16}
-        color={star <= rating ? "#FFD700" : "#ccc"}
+        color={s <= rating ? "#FFD700" : "#ccc"}
       />
     ))}
   </View>
@@ -74,6 +75,7 @@ console.log("Route id:", id);
         setLoading(true);
         setReviewsLoading(true);
 
+
         const placeRef = doc(db, "places", id);
         const placeSnap = await getDoc(placeRef);
 
@@ -83,12 +85,12 @@ console.log("Route id:", id);
           setPlace(null);
         }
 
+
+        // ✅ Lấy reviews theo placeid
         const q = query(collection(db, "reviews"), where("placeid", "==", id));
         const reviewSnap = await getDocs(q);
 
-        setReviews(
-          reviewSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
-        );
+        setReviews(reviewSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
       } finally {
         setLoading(false);
         setReviewsLoading(false);
@@ -122,7 +124,6 @@ console.log("Route id:", id);
           <Text style={styles.title}>{place.title}</Text>
           <Text style={styles.location}>{place.location}</Text>
 
-          {/* Mô tả */}
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
