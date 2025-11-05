@@ -2,50 +2,45 @@ import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Keyboard,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableWithoutFeedback,
-    View,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthConText";
 
 const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
 
-const StarRating = ({
-  rating,
-  setRating,
-}: {
+type StarRatingProps = {
   rating: number;
-  setRating: (rating: number) => void;
-}) => {
-  return (
-    <View style={styles.starContainer}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Pressable key={star} onPress={() => setRating(star)}>
-          <Feather
-            name="star"
-            size={32}
-            color={star <= rating ? "#FFD700" : "#ccc"}
-            style={styles.star}
-          />
-        </Pressable>
-      ))}
-    </View>
-  );
+  setRating: (value: number) => void;
 };
+
+const StarRating: React.FC<StarRatingProps> = ({ rating, setRating }) => (
+  <View style={styles.starContainer}>
+    {[1, 2, 3, 4, 5].map((star) => (
+      <Pressable key={star} onPress={() => setRating(star)}>
+        <Feather
+          name="star"
+          size={32}
+          color={star <= rating ? "#FFD700" : "#ccc"}
+          style={styles.star}
+        />
+      </Pressable>
+    ))}
+  </View>
+);
 
 export default function ReviewModalScreen() {
   const router = useRouter();
-
-  const { placeid, placeName } = useLocalSearchParams<{
-    placeid: string;
-    placeName: string;
-  }>();
+  const { userName } = useAuth();
+  const { placeid, placeName } = useLocalSearchParams();
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -60,34 +55,46 @@ export default function ReviewModalScreen() {
       Alert.alert("Lỗi", "Vui lòng nhập bình luận của bạn.");
       return;
     }
-    if (!placeid) return;
+
+    if (!placeid) {
+      Alert.alert("Lỗi", "Không xác định được địa điểm.");
+      return;
+    }
 
     setIsSubmitting(true);
 
+    const reviewData = {
+      author: userName || "Người dùng Ẩn danh",
+      rating,
+      comment,
+      placeid: String(placeid), // ✅ Ép placeid thành string cho chắc chắn
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log("🟢 Gửi review:", reviewData);
+
     try {
-      const response = await fetch(`${YOUR_REVIEW_API_URL}/reviews`, {
+      const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          author: "Người dùng Ẩn danh",
-          rating: rating, // Gửi rating 1-5
-          comment: comment,
-          placeid: placeid,
-          createdAt: new Date().toISOString(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reviewData),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         Alert.alert("Thành công", "Cảm ơn bạn đã gửi đánh giá!", [
-          { text: "OK", onPress: () => router.back() },
+          {
+            text: "OK",
+            onPress: () => {
+              router.back();
+            },
+          },
         ]);
       } else {
+        console.error("❌ Lỗi khi gửi:", await res.text());
         Alert.alert("Lỗi", "Không thể gửi đánh giá. Vui lòng thử lại.");
       }
-    } catch (error) {
-      console.error("Lỗi gửi review:", error);
+    } catch (err) {
+      console.error("⚠️ Lỗi kết nối:", err);
       Alert.alert("Lỗi", "Đã xảy ra lỗi kết nối.");
     } finally {
       setIsSubmitting(false);
@@ -105,7 +112,7 @@ export default function ReviewModalScreen() {
 
           <TextInput
             style={styles.textInput}
-            placeholder="Viết bình luận của bạn tại đây..."
+            placeholder="Viết bình luận của bạn..."
             multiline
             numberOfLines={5}
             value={comment}
@@ -134,20 +141,9 @@ export default function ReviewModalScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#333",
-  },
+  safeArea: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 20 },
+  title: { fontSize: 22, fontWeight: "bold", textAlign: "center", color: "#333" },
   placeName: {
     fontSize: 18,
     color: "#007AFF",
@@ -155,14 +151,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 4,
   },
-  starContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  star: {
-    marginHorizontal: 5,
-  },
+  starContainer: { flexDirection: "row", justifyContent: "center", marginVertical: 20 },
+  star: { marginHorizontal: 5 },
   textInput: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -181,13 +171,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  submitButtonDisabled: {
-    backgroundColor: "#a9d0ff",
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  submitButtonDisabled: { backgroundColor: "#a9d0ff" },
+  submitButtonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
 });
-

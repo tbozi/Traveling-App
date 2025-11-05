@@ -1,17 +1,21 @@
 import { Feather } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router"; // 🟢 thêm useFocusEffect
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  LayoutAnimation,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  UIManager,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 const FRIEND_API_URL = "https://68ff4999e02b16d1753d49db.mockapi.io";
 const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
 
@@ -56,6 +60,10 @@ const ReviewItem = ({ review }: { review: Review }) => (
   </View>
 );
 
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -64,39 +72,51 @@ export default function PlaceDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
-  useEffect(() => {
+  const fetchPlaceById = useCallback(async () => {
     if (!id) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`${FRIEND_API_URL}/places/${id}`);
+      const data: Place = await response.json();
+      setPlace(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
-    const fetchPlaceById = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${FRIEND_API_URL}/places/${id}`);
-        const data: Place = await response.json();
-        setPlace(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchReviews = useCallback(async () => {
+    if (!id) return;
+    try {
+      setReviewsLoading(true);
+      const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews`);
+      const data: Review[] = await res.json();
 
-    const fetchReviews = async () => {
-      try {
-        setReviewsLoading(true);
-        const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews?placeid=${id}`);
-        const data: Review[] = await res.json();
-        setReviews(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
+      // ✅ Lọc review theo placeid hiện tại
+      const filtered = data.filter((r) => String(r.placeid) === String(id));
+      setReviews(filtered);
+    } catch (err) {
+      console.error("Lỗi tải review:", err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [id]);
 
+  // 🔹 Gọi lần đầu khi load
+  useEffect(() => {
     fetchPlaceById();
     fetchReviews();
   }, [id]);
+
+  // 🟢 Refresh review mỗi khi quay lại màn hình chi tiết
+  useFocusEffect(
+    useCallback(() => {
+      fetchReviews();
+    }, [fetchReviews])
+  );
 
   if (loading) {
     return (
@@ -131,9 +151,7 @@ export default function PlaceDetailScreen() {
 
           {place.discount && place.discount > 0 ? (
             <>
-              <Text style={styles.oldPrice}>
-                {place.price.toLocaleString()}₫
-              </Text>
+              <Text style={styles.oldPrice}>{place.price.toLocaleString()}₫</Text>
               <Text style={styles.newPrice}>
                 {discountedPrice.toLocaleString()}₫ (-{place.discount}%)
               </Text>
@@ -164,18 +182,33 @@ export default function PlaceDetailScreen() {
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
             {reviewsLoading ? (
-              <ActivityIndicator
-                color="#1E90FF"
-                style={{ marginVertical: 20 }}
-              />
+              <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
             ) : reviews.length === 0 ? (
               <Text style={styles.noReviewsText}>
                 Chưa có đánh giá nào cho địa điểm này.
               </Text>
             ) : (
-              reviews.map((review) => (
-                <ReviewItem key={review.id} review={review} />
-              ))
+              <>
+                <ScrollView style={styles.reviewsScroll} nestedScrollEnabled>
+                  {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+                    <ReviewItem key={review.id} review={review} />
+                  ))}
+                </ScrollView>
+
+                {reviews.length > 3 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                      setShowAllReviews(!showAllReviews);
+                    }}
+                    style={styles.moreButton}
+                  >
+                    <Text style={styles.moreButtonText}>
+                      {showAllReviews ? "Thu gọn" : "Xem thêm"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -238,4 +271,14 @@ const styles = StyleSheet.create({
   },
   bookButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   starDisplay: { flexDirection: "row", marginVertical: 4 },
+  reviewsScroll: { maxHeight: 250, marginBottom: 10 },
+  moreButton: {
+    alignSelf: "center",
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#E8F0FE",
+  },
+  moreButtonText: { color: "#1E90FF", fontWeight: "600" },
 });

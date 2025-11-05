@@ -1,6 +1,8 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 
 export default function RegisterScreen() {
   const router = useRouter();
