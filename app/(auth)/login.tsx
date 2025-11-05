@@ -1,9 +1,12 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthConText";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { setUserEmail, setUserName } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -17,10 +20,14 @@ export default function LoginScreen() {
       const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users");
       const users = await res.json();
 
-      const user = users.find((u: any) => u.email === email && u.password === password);
+      const user = users.find(
+        (u: any) => u.email === email && u.password === password
+      );
 
       if (user) {
         Alert.alert("Đăng nhập thành công!");
+        setUserEmail(user.email);
+        setUserName(user.fullname); 
         router.replace("/(tabs)");
       } else {
         Alert.alert("Sai thông tin đăng nhập!");
@@ -40,7 +47,6 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
-        keyboardType="email-address"
       />
       <TextInput
         placeholder="Mật khẩu"
@@ -65,31 +71,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: "#F9FAFB", justifyContent: "center", alignItems: "center", padding: 20 },
   title: { fontSize: 26, fontWeight: "700", marginBottom: 20 },
-  input: {
-    width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 12,
-  },
-  btn: {
-    backgroundColor: "#1E90FF",
-    width: "100%",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
+  input: { width: "100%", backgroundColor: "#fff", borderRadius: 8, padding: 12, borderWidth: 1, borderColor: "#ddd", marginBottom: 12 },
+  btn: { backgroundColor: "#1E90FF", width: "100%", padding: 14, borderRadius: 8, alignItems: "center", marginTop: 10 },
   btnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   footerText: { marginTop: 20, color: "#555" },
   link: { color: "#1E90FF", fontWeight: "600" },

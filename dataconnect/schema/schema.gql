@@ -1,0 +1,25 @@
+type Hotel {
+  id: ID!
+  name: String!
+  location: String!
+  pricePerNight: Float!
+  rating: Float
+  imageUrl: String
+  description: String
+}
+
+type Query {
+  getHotels: [Hotel!]!
+  getHotelById(id: ID!): Hotel
+}
+
+type Mutation {
+  addHotel(
+    name: String!,
+    location: String!,
+    pricePerNight: Float!,
+    rating: Float,
+    imageUrl: String,
+    description: String
+  ): Hotel
+}

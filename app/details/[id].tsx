@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,29 +13,27 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const FRIEND_API_URL = "https://68ff4999e02b16d1753d49db.mockapi.io";
-const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
+import { db } from "../js/config";
 
 interface Place {
   id: string;
   title: string;
   location: string;
   image: string;
-  price: number;
-  discount: number;
   type: string;
   desc: string;
 }
 
 interface Review {
   id: string;
-  createdAt: string;
+  createAt: string;
   author: string;
   rating: number;
   comment: string;
   placeid: string;
 }
 
+// ⭐ Hiển thị sao
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
     {[1, 2, 3, 4, 5].map((star) => (
@@ -48,6 +47,7 @@ const StarDisplay = ({ rating }: { rating: number }) => (
   </View>
 );
 
+// 🧾 Một đánh giá
 const ReviewItem = ({ review }: { review: Review }) => (
   <View style={styles.reviewItem}>
     <Text style={styles.reviewAuthor}>{review.author}</Text>
@@ -57,9 +57,10 @@ const ReviewItem = ({ review }: { review: Review }) => (
 );
 
 export default function PlaceDetailScreen() {
+  
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-
+console.log("Route id:", id);
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -68,57 +69,49 @@ export default function PlaceDetailScreen() {
   useEffect(() => {
     if (!id) return;
 
-    const fetchPlaceById = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${FRIEND_API_URL}/places/${id}`);
-        const data: Place = await response.json();
-        setPlace(data);
-      } catch (error) {
-        console.error(error);
+        setReviewsLoading(true);
+
+        const placeRef = doc(db, "places", id);
+        const placeSnap = await getDoc(placeRef);
+
+        if (placeSnap.exists()) {
+          setPlace({ id: placeSnap.id, ...placeSnap.data() } as Place);
+        } else {
+          setPlace(null);
+        }
+
+        const q = query(collection(db, "reviews"), where("placeid", "==", id));
+        const reviewSnap = await getDocs(q);
+
+        setReviews(
+          reviewSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
+        );
       } finally {
         setLoading(false);
-      }
-    };
-
-    const fetchReviews = async () => {
-      try {
-        setReviewsLoading(true);
-        const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews?placeid=${id}`);
-        const data: Review[] = await res.json();
-        setReviews(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
         setReviewsLoading(false);
       }
     };
 
-    fetchPlaceById();
-    fetchReviews();
+    fetchData();
   }, [id]);
 
-  if (loading) {
+  if (loading)
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#1E90FF" />
         <Text>Đang tải chi tiết...</Text>
       </SafeAreaView>
     );
-  }
 
-  if (!place) {
+  if (!place)
     return (
       <SafeAreaView style={styles.center}>
         <Text>Không tìm thấy địa điểm 🥲</Text>
       </SafeAreaView>
     );
-  }
-
-  const discountedPrice =
-    place.discount && place.discount > 0
-      ? place.price * (1 - place.discount / 100)
-      : place.price;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -129,31 +122,17 @@ export default function PlaceDetailScreen() {
           <Text style={styles.title}>{place.title}</Text>
           <Text style={styles.location}>{place.location}</Text>
 
-          {place.discount && place.discount > 0 ? (
-            <>
-              <Text style={styles.oldPrice}>
-                {place.price.toLocaleString()}₫
-              </Text>
-              <Text style={styles.newPrice}>
-                {discountedPrice.toLocaleString()}₫ (-{place.discount}%)
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.newPrice}>{place.price.toLocaleString()}₫</Text>
-          )}
-
+          {/* Mô tả */}
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
+          {/* Nút viết review */}
           <Pressable
             style={styles.reviewButton}
             onPress={() =>
               router.push({
                 pathname: "/modal/review",
-                params: {
-                  placeid: place.id,
-                  placeName: place.title,
-                },
+                params: { placeid: place.id, placeName: place.title },
               })
             }
           >
@@ -161,25 +140,23 @@ export default function PlaceDetailScreen() {
             <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
           </Pressable>
 
+          {/* Danh sách review */}
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
+
             {reviewsLoading ? (
-              <ActivityIndicator
-                color="#1E90FF"
-                style={{ marginVertical: 20 }}
-              />
+              <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
             ) : reviews.length === 0 ? (
               <Text style={styles.noReviewsText}>
                 Chưa có đánh giá nào cho địa điểm này.
               </Text>
             ) : (
-              reviews.map((review) => (
-                <ReviewItem key={review.id} review={review} />
-              ))
+              reviews.map((r) => <ReviewItem key={r.id} review={r} />)
             )}
           </View>
         </View>
 
+        {/* Nút đặt vé */}
         <TouchableOpacity
           style={styles.bookButton}
           onPress={() =>
@@ -189,7 +166,7 @@ export default function PlaceDetailScreen() {
             })
           }
         >
-          <Text style={styles.bookButtonText}>Đặt vé</Text>
+          <Text style={styles.bookButtonText}>Đặt phòng</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -198,16 +175,14 @@ export default function PlaceDetailScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   image: { width: "100%", height: 250 },
   content: { padding: 16, paddingBottom: 50 },
   title: { fontSize: 24, fontWeight: "700", marginBottom: 6 },
   location: { fontSize: 16, color: "#666", marginBottom: 10 },
-  oldPrice: { textDecorationLine: "line-through", color: "#999", fontSize: 15 },
-  newPrice: { color: "#1E90FF", fontWeight: "bold", fontSize: 18 },
   descTitle: { fontSize: 18, fontWeight: "600", marginTop: 16 },
   desc: { fontSize: 15, color: "#444", marginTop: 6, lineHeight: 22 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   reviewButton: {
     flexDirection: "row",
     alignItems: "center",
