@@ -167,6 +167,7 @@ export default function HomeScreen() {
   </View>
 </View>
 
+
         <Text style={styles.sectionTitle}>🔥 Hot Destinations</Text>
         <FlatList
           data={hotPlaces}
@@ -238,6 +239,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#444",
   },
+
   banner: {
   marginTop: 18,
   marginHorizontal: 16,
@@ -261,4 +263,5 @@ bannerSub: {
   color: "#eee",
   marginTop: 4,
 },
+
 });

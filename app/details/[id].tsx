@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { db } from "../js/config"; // ✅ Đảm bảo đúng path Firebase config
 
 interface Place {
@@ -57,9 +58,10 @@ const ReviewItem = ({ review }: { review: Review }) => (
 );
 
 export default function PlaceDetailScreen() {
+  
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-
+console.log("Route id:", id);
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -73,7 +75,7 @@ export default function PlaceDetailScreen() {
         setLoading(true);
         setReviewsLoading(true);
 
-        // ✅ Lấy chi tiết địa điểm
+
         const placeRef = doc(db, "places", id);
         const placeSnap = await getDoc(placeRef);
 
@@ -82,6 +84,7 @@ export default function PlaceDetailScreen() {
         } else {
           setPlace(null);
         }
+
 
         // ✅ Lấy reviews theo placeid
         const q = query(collection(db, "reviews"), where("placeid", "==", id));
@@ -120,6 +123,7 @@ export default function PlaceDetailScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>{place.title}</Text>
           <Text style={styles.location}>{place.location}</Text>
+
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
@@ -163,7 +167,7 @@ export default function PlaceDetailScreen() {
             })
           }
         >
-          <Text style={styles.bookButtonText}>Đặt vé</Text>
+          <Text style={styles.bookButtonText}>Đặt phòng</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import removeAccents from "remove-accents"; // ✅ thêm package
 import { db } from "../js/config";
 
 export default function SearchResultScreen() {
@@ -25,12 +26,19 @@ export default function SearchResultScreen() {
         setLoading(true);
         const querySnapshot = await getDocs(collection(db, "hotels"));
         const allHotels: any[] = [];
-        querySnapshot.forEach((doc) => allHotels.push({ id: doc.id, ...doc.data() }));
 
-        // 🔍 Lọc theo "chuỗi chứa" (case-insensitive)
-        const filtered = allHotels.filter((h) =>
-          h.location?.toLowerCase().includes(destination?.toLowerCase() || "")
+        querySnapshot.forEach((doc) =>
+          allHotels.push({ id: doc.id, ...doc.data() })
         );
+
+        // 🔍 Lọc địa điểm: bỏ dấu, ignore case, match nhiều từ
+        const destNormalized = removeAccents(destination || "").toLowerCase();
+
+        const filtered = allHotels.filter((h) => {
+          const locationNormalized = removeAccents(h.location || "").toLowerCase();
+          return locationNormalized.includes(destNormalized);
+        });
+
 
         setHotels(filtered);
       } catch (error) {
@@ -74,7 +82,9 @@ export default function SearchResultScreen() {
       <View style={styles.info}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.location}>{item.location}</Text>
-        <Text style={styles.price}>{item.price.toLocaleString()}₫ / đêm</Text>
+        <Text style={styles.price}>
+          {item.price?.toLocaleString()}₫ / đêm
+        </Text>
         <Text style={styles.rating}>⭐ {item.rating}</Text>
       </View>
     </TouchableOpacity>
@@ -82,7 +92,13 @@ export default function SearchResultScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList data={hotels} renderItem={renderHotel} keyExtractor={(i) => i.id} />
+
+      <FlatList
+        data={hotels}
+        renderItem={renderHotel}
+        keyExtractor={(i) => i.id}
+      />
+
     </View>
   );
 }
