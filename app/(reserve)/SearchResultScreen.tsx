@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import removeAccents from "remove-accents"; // ✅ thêm package
-import { db } from "../js/config";
+import { db } from "../../js/config";
 
 export default function SearchResultScreen() {
   const router = useRouter();

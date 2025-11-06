@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,8 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { db } from "../js/config"; // ✅ Đảm bảo đúng path Firebase config
+import { db } from "../../js/config";
 
 interface Place {
   id: string;
@@ -27,28 +26,21 @@ interface Place {
 
 interface Review {
   id: string;
-  createAt: string;
+  createdAt: string;
   author: string;
   rating: number;
   comment: string;
   placeid: string;
 }
 
-// ⭐ Hiển thị sao
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
     {[1, 2, 3, 4, 5].map((s) => (
-      <Feather
-        key={s}
-        name="star"
-        size={16}
-        color={s <= rating ? "#FFD700" : "#ccc"}
-      />
+      <Feather key={s} name="star" size={16} color={s <= rating ? "#FFD700" : "#ccc"} />
     ))}
   </View>
 );
 
-// 🧾 Một đánh giá
 const ReviewItem = ({ review }: { review: Review }) => (
   <View style={styles.reviewItem}>
     <Text style={styles.reviewAuthor}>{review.author}</Text>
@@ -58,46 +50,62 @@ const ReviewItem = ({ review }: { review: Review }) => (
 );
 
 export default function PlaceDetailScreen() {
-  
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-console.log("Route id:", id);
+
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-
-    const fetchData = async () => {
+    const fetchPlace = async () => {
       try {
         setLoading(true);
-        setReviewsLoading(true);
-
-
         const placeRef = doc(db, "places", id);
         const placeSnap = await getDoc(placeRef);
-
         if (placeSnap.exists()) {
           setPlace({ id: placeSnap.id, ...placeSnap.data() } as Place);
         } else {
           setPlace(null);
         }
-
-
-        // ✅ Lấy reviews theo placeid
-        const q = query(collection(db, "reviews"), where("placeid", "==", id));
-        const reviewSnap = await getDocs(q);
-
-        setReviews(reviewSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
       } finally {
         setLoading(false);
-        setReviewsLoading(false);
       }
     };
+    fetchPlace();
+  }, [id]);
 
-    fetchData();
+
+  useEffect(() => {
+    if (!id) return;
+
+    setReviewsLoading(true);
+    const q = query(
+      collection(db, "reviews"),
+      where("placeid", "==", id),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const reviewList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Review[];
+        setReviews(reviewList);
+        setReviewsLoading(false);
+      },
+      (error) => {
+        console.error("Lỗi khi nghe realtime reviews:", error);
+        setReviewsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, [id]);
 
   if (loading)
@@ -127,7 +135,6 @@ console.log("Route id:", id);
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
-          {/* Nút viết review */}
           <Pressable
             style={styles.reviewButton}
             onPress={() =>
@@ -141,23 +148,36 @@ console.log("Route id:", id);
             <Text style={styles.reviewButtonText}>Viết đánh giá của bạn</Text>
           </Pressable>
 
-          {/* Danh sách review */}
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
 
             {reviewsLoading ? (
               <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
             ) : reviews.length === 0 ? (
-              <Text style={styles.noReviewsText}>
-                Chưa có đánh giá nào cho địa điểm này.
-              </Text>
+              <Text style={styles.noReviewsText}>Chưa có đánh giá nào cho địa điểm này.</Text>
             ) : (
-              reviews.map((r) => <ReviewItem key={r.id} review={r} />)
+              <>
+                <ScrollView style={styles.reviewsScroll} nestedScrollEnabled>
+                  {(showAllReviews ? reviews : reviews.slice(0, 3)).map((r) => (
+                    <ReviewItem key={r.id} review={r} />
+                  ))}
+                </ScrollView>
+
+                {reviews.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.moreButton}
+                    onPress={() => setShowAllReviews(!showAllReviews)}
+                  >
+                    <Text style={styles.moreButtonText}>
+                      {showAllReviews ? "Thu gọn" : "Xem thêm"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
         </View>
 
-        {/* Nút đặt vé */}
         <TouchableOpacity
           style={styles.bookButton}
           onPress={() =>
@@ -214,4 +234,14 @@ const styles = StyleSheet.create({
   },
   bookButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   starDisplay: { flexDirection: "row", marginVertical: 4 },
+  reviewsScroll: { maxHeight: 250, marginBottom: 10 },
+  moreButton: {
+    alignSelf: "center",
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#E8F0FE",
+  },
+  moreButtonText: { color: "#1E90FF", fontWeight: "600" },
 });

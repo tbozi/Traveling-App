@@ -15,15 +15,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../js/config";
+import { db } from "../../js/config";
 
 interface Place {
   id: string;
   title: string;
   location: string;
   image: string;
-  type: string;
   desc: string;
+  type: string;
 }
 
 export default function HomeScreen() {
@@ -58,10 +58,10 @@ export default function HomeScreen() {
         return {
           id: doc.id,
           title: d.title,
-          location: d.location,
-          image: d.image,
-          type: d.type,
+          location: d.rental || d.location,
+          image: d.picture || d.image,
           desc: d.desc,
+          type: d.kind || d.type,
         };
       });
       setPlaces(data);
@@ -105,7 +105,10 @@ export default function HomeScreen() {
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.location}>{item.location}</Text>
-              <Text style={styles.more}>Xem chi tiết →</Text>
+              <Text style={styles.desc} numberOfLines={2}>{item.desc}</Text>
+              <Text style={styles.typeTag}>
+                Loại: {item.type === "hot" ? "🔥 Hot" : item.type === "offer" ? "💸 Offer" : item.type}
+              </Text>
             </View>
           </TouchableOpacity>
         </Link>
@@ -116,7 +119,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#1E90FF" />
         <Text style={{ marginTop: 8 }}>Đang tải dữ liệu...</Text>
       </SafeAreaView>
     );
@@ -128,6 +131,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
@@ -143,11 +147,13 @@ export default function HomeScreen() {
           </Link>
         </View>
 
+        {/* Search Bar */}
         <View style={styles.searchBox}>
           <Ionicons name="search" size={20} color="#888" />
           <Text style={{ marginLeft: 8, color: "#666" }}>Search destination...</Text>
         </View>
 
+        {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
           {categories.map((c, i) => (
             <View key={i} style={styles.categoryItem}>
@@ -156,18 +162,20 @@ export default function HomeScreen() {
             </View>
           ))}
         </ScrollView>
+
+        {/* Banner */}
         <View style={styles.banner}>
-  <Image
-    source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
-    style={styles.bannerImg}
-  />
-  <View style={styles.bannerTextBox}>
-    <Text style={styles.bannerTitle}>Special Deal!</Text>
-    <Text style={styles.bannerSub}>Up to 50% on holidays this week</Text>
-  </View>
-</View>
+          <Image
+            source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
+            style={styles.bannerImg}
+          />
+          <View style={styles.bannerTextBox}>
+            <Text style={styles.bannerTitle}>Special Deal!</Text>
+            <Text style={styles.bannerSub}>Up to 50% on holidays this week</Text>
+          </View>
+        </View>
 
-
+        {/* Hot places */}
         <Text style={styles.sectionTitle}>🔥 Hot Destinations</Text>
         <FlatList
           data={hotPlaces}
@@ -178,6 +186,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         />
 
+        {/* Offer places */}
         <Text style={styles.sectionTitle}>💸 Special Offers</Text>
         <FlatList
           data={offerPlaces}
@@ -207,13 +216,29 @@ const styles = StyleSheet.create({
   logo: { width: 40, height: 40, marginRight: 10 },
   titleHeader: { fontSize: 22, fontWeight: "bold", color: "#fff" },
   sectionTitle: { fontSize: 20, fontWeight: "700", marginTop: 20, marginBottom: 10, marginLeft: 16 },
-  card: { backgroundColor: "#fff", borderRadius: 12, marginRight: 12, overflow: "hidden", width: 200, position: "relative" },
-  image: { width: "100%", height: 120 },
-  heartBtn: { position: "absolute", top: 8, right: 8, zIndex: 10, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 20, padding: 4 },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginRight: 12,
+    overflow: "hidden",
+    width: 220,
+    position: "relative",
+  },
+  image: { width: "100%", height: 130 },
+  heartBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 20,
+    padding: 4,
+  },
   info: { padding: 8 },
   title: { fontSize: 16, fontWeight: "600", marginTop: 4 },
-  location: { color: "#666", fontSize: 13 },
-  more: { marginTop: 6, fontWeight: "600", color: "#1E90FF" },
+  location: { color: "#666", fontSize: 13, marginTop: 2 },
+  desc: { color: "#444", fontSize: 13, marginTop: 4 },
+  typeTag: { marginTop: 6, color: "#1E90FF", fontWeight: "600" },
   searchBox: {
     flexDirection: "row",
     backgroundColor: "#fff",
@@ -225,43 +250,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  categoryRow: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  categoryItem: {
-    alignItems: "center",
-    marginRight: 20,
-  },
-  categoryText: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#444",
-  },
-
+  categoryRow: { marginTop: 16, paddingHorizontal: 16 },
+  categoryItem: { alignItems: "center", marginRight: 20 },
+  categoryText: { marginTop: 4, fontSize: 12, fontWeight: "500", color: "#444" },
   banner: {
-  marginTop: 18,
-  marginHorizontal: 16,
-  borderRadius: 14,
-  overflow: "hidden",
-  position: "relative",
-},
-bannerImg: { width: "100%", height: 150 },
-bannerTextBox: {
-  position: "absolute",
-  bottom: 15,
-  left: 15,
-},
-bannerTitle: {
-  fontSize: 20,
-  fontWeight: "700",
-  color: "#fff",
-},
-bannerSub: {
-  fontSize: 14,
-  color: "#eee",
-  marginTop: 4,
-},
-
+    marginTop: 18,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    overflow: "hidden",
+    position: "relative",
+  },
+  bannerImg: { width: "100%", height: 150 },
+  bannerTextBox: { position: "absolute", bottom: 15, left: 15 },
+  bannerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
+  bannerSub: { fontSize: 14, color: "#eee", marginTop: 4 },
 });
