@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { Link } from "expo-router";
-import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,16 +15,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { db } from "../../js/config";
 
 interface Place {
   id: string;
   title: string;
   location: string;
   image: string;
-  price: number;
-  discount: number;
-  type: string;
   desc: string;
+  type: string;
 }
 
 export default function HomeScreen() {
@@ -30,19 +31,42 @@ export default function HomeScreen() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+    { icon: "airplane-outline", label: "Flights" },
+    { icon: "bed-outline", label: "Hotels" },
+    { icon: "navigate-outline", label: "Trips" },
+    { icon: "restaurant-outline", label: "Food" },
+    { icon: "car-outline", label: "Rent Car" },
+  ];
+
   useEffect(() => {
     loadFavorites();
     fetchPlaces();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [])
+  );
+
   const fetchPlaces = async () => {
     try {
-      const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/places");
-      const data = await res.json();
+      const snapshot = await getDocs(collection(db, "places"));
+      const data = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          title: d.title,
+          location: d.rental || d.location,
+          image: d.picture || d.image,
+          desc: d.desc,
+          type: d.kind || d.type,
+        };
+      });
       setPlaces(data);
     } catch (err) {
-      console.error("Lỗi tải API:", err);
-      // Alert chỉ hoạt động trên native, web bỏ Alert
+      console.log("🔥 Firebase error: ", err);
     } finally {
       setLoading(false);
     }
@@ -65,8 +89,6 @@ export default function HomeScreen() {
   };
 
   const renderPlaceCard = ({ item }: { item: Place }) => {
-    const discountedPrice = item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
-
     return (
       <View style={styles.card}>
         <TouchableOpacity onPress={() => toggleFavorite(item.id)} style={styles.heartBtn}>
@@ -83,15 +105,10 @@ export default function HomeScreen() {
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.location}>{item.location}</Text>
-
-              {item.discount > 0 ? (
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceOld}>{item.price.toLocaleString()}₫</Text>
-                  <Text style={styles.priceNew}>{discountedPrice.toLocaleString()}₫ (-{item.discount}%)</Text>
-                </View>
-              ) : (
-                <Text style={styles.price}>{item.price.toLocaleString()}₫</Text>
-              )}
+              <Text style={styles.desc} numberOfLines={2}>{item.desc}</Text>
+              <Text style={styles.typeTag}>
+                Loại: {item.type === "hot" ? "🔥 Hot" : item.type === "offer" ? "💸 Offer" : item.type}
+              </Text>
             </View>
           </TouchableOpacity>
         </Link>
@@ -114,6 +131,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
@@ -129,6 +147,35 @@ export default function HomeScreen() {
           </Link>
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} color="#888" />
+          <Text style={{ marginLeft: 8, color: "#666" }}>Search destination...</Text>
+        </View>
+
+        {/* Categories */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
+          {categories.map((c, i) => (
+            <View key={i} style={styles.categoryItem}>
+              <Ionicons name={c.icon} size={28} />
+              <Text style={styles.categoryText}>{c.label}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Banner */}
+        <View style={styles.banner}>
+          <Image
+            source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
+            style={styles.bannerImg}
+          />
+          <View style={styles.bannerTextBox}>
+            <Text style={styles.bannerTitle}>Special Deal!</Text>
+            <Text style={styles.bannerSub}>Up to 50% on holidays this week</Text>
+          </View>
+        </View>
+
+        {/* Hot places */}
         <Text style={styles.sectionTitle}>🔥 Hot Destinations</Text>
         <FlatList
           data={hotPlaces}
@@ -139,6 +186,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         />
 
+        {/* Offer places */}
         <Text style={styles.sectionTitle}>💸 Special Offers</Text>
         <FlatList
           data={offerPlaces}
@@ -168,14 +216,52 @@ const styles = StyleSheet.create({
   logo: { width: 40, height: 40, marginRight: 10 },
   titleHeader: { fontSize: 22, fontWeight: "bold", color: "#fff" },
   sectionTitle: { fontSize: 20, fontWeight: "700", marginTop: 20, marginBottom: 10, marginLeft: 16 },
-  card: { backgroundColor: "#fff", borderRadius: 12, marginRight: 12, overflow: "hidden", width: 200, position: "relative" },
-  image: { width: "100%", height: 120 },
-  heartBtn: { position: "absolute", top: 8, right: 8, zIndex: 10, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 20, padding: 4 },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginRight: 12,
+    overflow: "hidden",
+    width: 220,
+    position: "relative",
+  },
+  image: { width: "100%", height: 130 },
+  heartBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 20,
+    padding: 4,
+  },
   info: { padding: 8 },
   title: { fontSize: 16, fontWeight: "600", marginTop: 4 },
-  location: { color: "#666", fontSize: 13 },
-  price: { color: "#1E90FF", fontWeight: "bold", marginTop: 4 },
-  priceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  priceOld: { textDecorationLine: "line-through", color: "#999", fontSize: 13 },
-  priceNew: { color: "green", fontWeight: "700" },
+  location: { color: "#666", fontSize: 13, marginTop: 2 },
+  desc: { color: "#444", fontSize: 13, marginTop: 4 },
+  typeTag: { marginTop: 6, color: "#1E90FF", fontWeight: "600" },
+  searchBox: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  categoryRow: { marginTop: 16, paddingHorizontal: 16 },
+  categoryItem: { alignItems: "center", marginRight: 20 },
+  categoryText: { marginTop: 4, fontSize: 12, fontWeight: "500", color: "#444" },
+  banner: {
+    marginTop: 18,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    overflow: "hidden",
+    position: "relative",
+  },
+  bannerImg: { width: "100%", height: 150 },
+  bannerTextBox: { position: "absolute", bottom: 15, left: 15 },
+  bannerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
+  bannerSub: { fontSize: 14, color: "#eee", marginTop: 4 },
 });

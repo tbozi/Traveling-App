@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,16 +13,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-const FRIEND_API_URL = "https://68ff4999e02b16d1753d49db.mockapi.io";
-const YOUR_REVIEW_API_URL = "https://68d55f5ae29051d1c0ae6203.mockapi.io";
+import { db } from "../../js/config";
 
 interface Place {
   id: string;
   title: string;
   location: string;
   image: string;
-  price: number;
-  discount: number;
   type: string;
   desc: string;
 }
@@ -37,13 +35,8 @@ interface Review {
 
 const StarDisplay = ({ rating }: { rating: number }) => (
   <View style={styles.starDisplay}>
-    {[1, 2, 3, 4, 5].map((star) => (
-      <Feather
-        key={`star-${star}`}
-        name="star"
-        size={16}
-        color={star <= rating ? "#FFD700" : "#ccc"}
-      />
+    {[1, 2, 3, 4, 5].map((s) => (
+      <Feather key={s} name="star" size={16} color={s <= rating ? "#FFD700" : "#ccc"} />
     ))}
   </View>
 );
@@ -64,61 +57,71 @@ export default function PlaceDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-
-    const fetchPlaceById = async () => {
+    const fetchPlace = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${FRIEND_API_URL}/places/${id}`);
-        const data: Place = await response.json();
-        setPlace(data);
-      } catch (error) {
-        console.error(error);
+        const placeRef = doc(db, "places", id);
+        const placeSnap = await getDoc(placeRef);
+        if (placeSnap.exists()) {
+          setPlace({ id: placeSnap.id, ...placeSnap.data() } as Place);
+        } else {
+          setPlace(null);
+        }
       } finally {
         setLoading(false);
       }
     };
-
-    const fetchReviews = async () => {
-      try {
-        setReviewsLoading(true);
-        const res = await fetch(`${YOUR_REVIEW_API_URL}/reviews?placeid=${id}`);
-        const data: Review[] = await res.json();
-        setReviews(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
-
-    fetchPlaceById();
-    fetchReviews();
+    fetchPlace();
   }, [id]);
 
-  if (loading) {
+
+  useEffect(() => {
+    if (!id) return;
+
+    setReviewsLoading(true);
+    const q = query(
+      collection(db, "reviews"),
+      where("placeid", "==", id),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const reviewList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Review[];
+        setReviews(reviewList);
+        setReviewsLoading(false);
+      },
+      (error) => {
+        console.error("Lỗi khi nghe realtime reviews:", error);
+        setReviewsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [id]);
+
+  if (loading)
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#1E90FF" />
         <Text>Đang tải chi tiết...</Text>
       </SafeAreaView>
     );
-  }
 
-  if (!place) {
+  if (!place)
     return (
       <SafeAreaView style={styles.center}>
         <Text>Không tìm thấy địa điểm 🥲</Text>
       </SafeAreaView>
     );
-  }
-
-  const discountedPrice =
-    place.discount && place.discount > 0
-      ? place.price * (1 - place.discount / 100)
-      : place.price;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -129,19 +132,6 @@ export default function PlaceDetailScreen() {
           <Text style={styles.title}>{place.title}</Text>
           <Text style={styles.location}>{place.location}</Text>
 
-          {place.discount && place.discount > 0 ? (
-            <>
-              <Text style={styles.oldPrice}>
-                {place.price.toLocaleString()}₫
-              </Text>
-              <Text style={styles.newPrice}>
-                {discountedPrice.toLocaleString()}₫ (-{place.discount}%)
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.newPrice}>{place.price.toLocaleString()}₫</Text>
-          )}
-
           <Text style={styles.descTitle}>Giới thiệu</Text>
           <Text style={styles.desc}>{place.desc}</Text>
 
@@ -150,10 +140,7 @@ export default function PlaceDetailScreen() {
             onPress={() =>
               router.push({
                 pathname: "/modal/review",
-                params: {
-                  placeid: place.id,
-                  placeName: place.title,
-                },
+                params: { placeid: place.id, placeName: place.title },
               })
             }
           >
@@ -163,19 +150,30 @@ export default function PlaceDetailScreen() {
 
           <View style={styles.reviewsContainer}>
             <Text style={styles.reviewsTitle}>Đánh giá ({reviews.length})</Text>
+
             {reviewsLoading ? (
-              <ActivityIndicator
-                color="#1E90FF"
-                style={{ marginVertical: 20 }}
-              />
+              <ActivityIndicator color="#1E90FF" style={{ marginVertical: 20 }} />
             ) : reviews.length === 0 ? (
-              <Text style={styles.noReviewsText}>
-                Chưa có đánh giá nào cho địa điểm này.
-              </Text>
+              <Text style={styles.noReviewsText}>Chưa có đánh giá nào cho địa điểm này.</Text>
             ) : (
-              reviews.map((review) => (
-                <ReviewItem key={review.id} review={review} />
-              ))
+              <>
+                <ScrollView style={styles.reviewsScroll} nestedScrollEnabled>
+                  {(showAllReviews ? reviews : reviews.slice(0, 3)).map((r) => (
+                    <ReviewItem key={r.id} review={r} />
+                  ))}
+                </ScrollView>
+
+                {reviews.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.moreButton}
+                    onPress={() => setShowAllReviews(!showAllReviews)}
+                  >
+                    <Text style={styles.moreButtonText}>
+                      {showAllReviews ? "Thu gọn" : "Xem thêm"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -189,7 +187,7 @@ export default function PlaceDetailScreen() {
             })
           }
         >
-          <Text style={styles.bookButtonText}>Đặt vé</Text>
+          <Text style={styles.bookButtonText}>Đặt phòng</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -198,16 +196,14 @@ export default function PlaceDetailScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   image: { width: "100%", height: 250 },
   content: { padding: 16, paddingBottom: 50 },
   title: { fontSize: 24, fontWeight: "700", marginBottom: 6 },
   location: { fontSize: 16, color: "#666", marginBottom: 10 },
-  oldPrice: { textDecorationLine: "line-through", color: "#999", fontSize: 15 },
-  newPrice: { color: "#1E90FF", fontWeight: "bold", fontSize: 18 },
   descTitle: { fontSize: 18, fontWeight: "600", marginTop: 16 },
   desc: { fontSize: 15, color: "#444", marginTop: 6, lineHeight: 22 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   reviewButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -238,4 +234,14 @@ const styles = StyleSheet.create({
   },
   bookButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   starDisplay: { flexDirection: "row", marginVertical: 4 },
+  reviewsScroll: { maxHeight: 250, marginBottom: 10 },
+  moreButton: {
+    alignSelf: "center",
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#E8F0FE",
+  },
+  moreButtonText: { color: "#1E90FF", fontWeight: "600" },
 });

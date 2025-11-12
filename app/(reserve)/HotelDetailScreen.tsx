@@ -1,157 +1,167 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { hotels } from "./HotelData";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { db } from "../../js/config"; // ❗ Không dùng SafeAreaView ở đây
 
 export default function HotelDetailScreen() {
-  const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { id, hotelId } = useLocalSearchParams<{ id: string; hotelId: string }>();
+  const [hotel, setHotel] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const hotel = hotels.find((h) => h.id === id);
+  useEffect(() => {
+    const fetchHotelData = async () => {
+      try {
+        setLoading(true);
+        const hotelSnap = await getDocs(
+          query(collection(db, "hotels"), where("hotelId", "==", hotelId))
+        );
+        const hotelData = hotelSnap.docs[0]?.data();
 
-  if (!hotel) {
+        const detailSnap = await getDocs(
+          query(collection(db, "hoteldetails"), where("hotelId", "==", hotelId))
+        );
+        const detailData = detailSnap.docs[0]?.data();
+
+        const images =
+          typeof detailData?.images === "string"
+            ? JSON.parse(detailData.images)
+            : detailData?.images || [];
+        const facilities =
+          typeof detailData?.facilities === "string"
+            ? JSON.parse(detailData.facilities)
+            : detailData?.facilities || [];
+
+        setHotel({
+          ...hotelData,
+          ...detailData,
+          images,
+          facilities,
+        });
+      } catch (err) {
+        console.error("🔥 Lỗi khi tải chi tiết khách sạn:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHotelData();
+  }, [id]);
+
+  if (loading)
     return (
-      <SafeAreaView style={styles.centered}>
-        <Text>Không tìm thấy khách sạn 🥲</Text>
-      </SafeAreaView>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0071C2" />
+      </View>
     );
-  }
+
+  if (!hotel)
+    return (
+      <View style={styles.center}>
+        <Text>Không tìm thấy khách sạn.</Text>
+      </View>
+    );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
-          {hotel.images.map((img, idx) => (
-            <Image key={idx} source={{ uri: img }} style={styles.image} />
+    <View style={styles.container}>
+      <ScrollView>
+        {/* Header tùy chỉnh — không còn trống phía trên */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>{hotel.name?.toUpperCase()}</Text>
+        </View>
+
+        {/* Hình ảnh */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginVertical: 10 }}
+        >
+          {hotel.images?.map((img: string, i: number) => (
+            <Image key={i} source={{ uri: img }} style={styles.image} />
           ))}
         </ScrollView>
 
-        <Text style={styles.sectionTitle}>Điểm nổi bật của chỗ nghỉ</Text>
-        <View style={styles.highlightContainer}>
-          {hotel.highlights.map((item, idx) => (
-            <View key={idx} style={styles.highlightItem}>
-              <Text style={styles.highlightText}>{item}</Text>
-            </View>
+        {/* Thông tin khách sạn */}
+        <View style={styles.info}>
+          <Text style={styles.name}>{hotel.name}</Text>
+          <Text style={styles.location}>{hotel.location}</Text>
+          <Text style={styles.rating}>⭐ {hotel.rating}</Text>
+          <Text style={styles.price}>
+            {hotel.price?.toLocaleString()}₫ / đêm
+          </Text>
+        </View>
+
+        {/* Tiện nghi */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tiện nghi nổi bật</Text>
+          {hotel.facilities?.map((f: string, i: number) => (
+            <Text key={i}>• {f}</Text>
           ))}
         </View>
 
-        <Text style={styles.description}>{hotel.description}</Text>
-
-        <View style={styles.infoSection}>
-          <View>
-            <Text style={styles.infoLabel}>Nhận phòng</Text>
-            <Text style={styles.infoValue}>{hotel.checkIn}</Text>
-          </View>
-          <View>
-            <Text style={styles.infoLabel}>Trả phòng</Text>
-            <Text style={styles.infoValue}>{hotel.checkOut}</Text>
-          </View>
+        {/* Mô tả */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Mô tả</Text>
+          <Text>{hotel.description}</Text>
         </View>
 
-        <Text style={styles.searchInfo}>{hotel.searchInfo}</Text>
-
-        <View style={styles.promoContainer}>
-          <Text style={styles.discount}>{hotel.discount}</Text>
-          <Text style={styles.promo}>{hotel.promo}</Text>
-        </View>
-
-        <Text style={styles.freeCancel}>{hotel.freeCancel}</Text>
-
-        <TouchableOpacity style={styles.button}>
+        {/* Nút chuyển */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            router.push({
+              pathname: "/(reserve)/RoomOptionScreen",
+              params: { id: hotelId, hotelName: hotel.name },
+            })
+          }
+        >
           <Text style={styles.buttonText}>Xem các lựa chọn</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, backgroundColor: "#fff" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
+    backgroundColor: "#0071C2",
+    padding: 12,
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#003B95",
+    justifyContent: "center",
   },
-  back: { color: "white", fontSize: 20, marginRight: 10 },
-  headerTitle: { color: "white", fontWeight: "bold", fontSize: 18 },
-  imageScroll: { marginVertical: 10 },
-  image: {
-    width: 250,
-    height: 180,
-    borderRadius: 10,
-    marginHorizontal: 8,
-  },
-  sectionTitle: {
+  headerTitle: {
+    color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
-    marginLeft: 16,
-    marginVertical: 8,
+    marginLeft: 10,
+    justifyContent: "center",
+    textAlign: "center",
   },
-  highlightContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: 16,
-  },
-  highlightItem: {
-    backgroundColor: "#f0f4ff",
-    borderRadius: 10,
-    padding: 8,
-    margin: 4,
-  },
-  highlightText: { color: "#003B95", fontWeight: "500" },
-  description: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    color: "#444",
-  },
-  infoSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: 16,
-    marginVertical: 10,
-  },
-  infoLabel: { color: "#777" },
-  infoValue: { fontWeight: "600", color: "#003B95" },
-  searchInfo: {
-    marginHorizontal: 16,
-    color: "#333",
-    marginBottom: 8,
-  },
-  promoContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
-  discount: {
-    backgroundColor: "#0A8754",
-    color: "white",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  promo: {
-    backgroundColor: "#1D4ED8",
-    color: "white",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  freeCancel: {
-    marginHorizontal: 16,
-    color: "#666",
-    marginBottom: 12,
-  },
+  image: { width: 320, height: 180, marginRight: 10, borderRadius: 8 },
+  info: { padding: 16 },
+  name: { fontSize: 20, fontWeight: "700" },
+  location: { color: "#555" },
+  rating: { color: "#f39c12" },
+  price: { color: "#0071C2", fontWeight: "700" },
+  section: { padding: 16 },
+  sectionTitle: { fontWeight: "bold", fontSize: 16, marginBottom: 6 },
   button: {
     backgroundColor: "#0071C2",
-    marginHorizontal: 16,
-    marginBottom: 20,
-    borderRadius: 8,
     padding: 14,
+    borderRadius: 8,
+    margin: 16,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });
