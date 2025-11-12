@@ -27,7 +27,7 @@ export default function LoginScreen() {
       if (user) {
         Alert.alert("Đăng nhập thành công!");
         setUserEmail(user.email);
-        setUserName(user.fullname); 
+        setUserName(user.fullname || "Người dùng");
         router.replace("/(tabs)");
       } else {
         Alert.alert("Sai thông tin đăng nhập!");

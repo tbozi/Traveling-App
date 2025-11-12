@@ -11,7 +11,7 @@ export default function ReserveLayout() {
       }}
     >
       <Stack.Screen
-        name="ReseverScreen"
+        name="ReserveScreen"
         options={{
           title: "Đặt phòng",
         }}
@@ -26,6 +26,18 @@ export default function ReserveLayout() {
         name="HotelDetailScreen"
         options={{
           title: "Chi tiết khách sạn",
+        }}
+      />
+      <Stack.Screen
+        name="RoomOptionScreen"
+        options={{
+          title: "Chọn phòng",
+        }}
+      />
+      <Stack.Screen
+        name="BookingConfirmScreen"
+        options={{
+          title: "Xác nhận đặt phòng",
         }}
       />
     </Stack>

@@ -4,12 +4,13 @@ import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity } fr
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
   const handleRegister = async () => {
-    if (!email || !password || !confirm) {
+    if (!fullname || !email || !password || !confirm) {
       Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin!");
       return;
     }
@@ -22,11 +23,11 @@ export default function RegisterScreen() {
       const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ fullname, email, password }),
       });
 
       if (res.ok) {
-        Alert.alert("Đăng ký thành công!");
+        Alert.alert("Đăng ký thành công!", "Hãy đăng nhập để tiếp tục.");
         router.replace("/(auth)/login");
       } else {
         Alert.alert("Lỗi", "Không thể đăng ký!");
@@ -41,6 +42,12 @@ export default function RegisterScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Đăng ký</Text>
 
+      <TextInput
+        placeholder="Họ và tên"
+        value={fullname}
+        onChangeText={setFullname}
+        style={styles.input}
+      />
       <TextInput
         placeholder="Email"
         value={email}
@@ -78,31 +85,10 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: "#F9FAFB", justifyContent: "center", alignItems: "center", padding: 20 },
   title: { fontSize: 26, fontWeight: "700", marginBottom: 20 },
-  input: {
-    width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 12,
-  },
-  btn: {
-    backgroundColor: "#1E90FF",
-    width: "100%",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
+  input: { width: "100%", backgroundColor: "#fff", borderRadius: 8, padding: 12, borderWidth: 1, borderColor: "#ddd", marginBottom: 12 },
+  btn: { backgroundColor: "#1E90FF", width: "100%", padding: 14, borderRadius: 8, alignItems: "center", marginTop: 10 },
   btnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   footerText: { marginTop: 20, color: "#555" },
   link: { color: "#1E90FF", fontWeight: "600" },
