@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../js/config"; // ✅ Đảm bảo đúng path Firebase config
+import { db } from "../js/config";
 
 interface Place {
   id: string;
