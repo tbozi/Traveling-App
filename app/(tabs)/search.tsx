@@ -1,20 +1,20 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../js/config"; // ✅ Firebase config
+import { db } from "../../js/config"; // ✅ Firebase config
 
 interface Place {
   id: string;

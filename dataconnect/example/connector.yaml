@@ -1,0 +1,38 @@
+version: 1
+connector:
+  name: hotels
+  queries:
+    getHotels:
+      gql: |
+        query {
+          getHotels {
+            id
+            name
+            location
+            pricePerNight
+            rating
+            imageUrl
+            description
+          }
+        }
+    getHotelById:
+      gql: |
+        query ($id: ID!) {
+          getHotelById(id: $id) {
+            id
+            name
+            location
+            pricePerNight
+            rating
+            imageUrl
+            description
+          }
+        }
+  mutations:
+    addHotel:
+      gql: |
+        mutation ($name: String!, $location: String!, $pricePerNight: Float!, $rating: Float, $imageUrl: String, $description: String) {
+          addHotel(name: $name, location: $location, pricePerNight: $pricePerNight, rating: $rating, imageUrl: $imageUrl, description: $description) {
+            id
+          }
+        }
