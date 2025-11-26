@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "traveling-app-ef5dd"
-  }
+    "default": "travellingapp-6f33a",
+    "travellingapp-6f33a": "travellingapp-6f33a"
+  },
+  "targets": {},
+  "etags": {}
 }

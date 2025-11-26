@@ -751,3 +751,134 @@ export const INITIAL_HOTELROOMS=[
     "size":"30 m²"
   },
 ]
+
+export const CAR_ITEMS=[
+  {
+    "id": "1",
+    "name": "Toyota Vios",
+    "brand": "Toyota",
+    "price": 550000,
+    "seats": 5,
+    "image": "https://giadinhviet.com/wp-content/uploads/2025/02/342-768x422.png"
+  },
+  {
+    "id": "2",
+    "name": "Toyota Fortuner",
+    "brand": "Toyota",
+    "price": 1200000,
+    "seats": 7,
+    "image": "https://giadinhviet.com/wp-content/uploads/2024/08/z5718277879986_838c069f55161486dba691914fcd5776-1.jpg"
+  },
+  {
+    "id": "3",
+    "name": "Honda City",
+    "brand": "Honda",
+    "price": 590000,
+    "seats": 5,
+    "image": "https://giadinhviet.com/wp-content/uploads/2024/08/Screenshot-2024-08-10-161012-1.png"
+  },
+  {
+    "id": "4",
+    "name": "Honda CR-V",
+    "brand": "Honda",
+    "price": 1100000,
+    "seats": 7,
+    "image": "https://giadinhviet.com/wp-content/uploads/2024/08/Screenshot-2024-08-10-161012-1.png"
+  },
+  {
+    "id": "5",
+    "name": "Hyundai Accent",
+    "brand": "Hyundai",
+    "price": 530000,
+    "seats": 5,
+    "image": "https://giadinhviet.com/wp-content/uploads/2024/08/Screenshot-2024-08-10-161012-1.png"
+  },
+  {
+    "id": "6",
+    "name": "Hyundai SantaFe",
+    "brand": "Hyundai",
+    "price": 1300000,
+    "seats": 7,
+    "image": "https://drive.gianhangvn.com/image/ocq5w5a-2698306j30542.jpg"
+  },
+  {
+    "id": "7",
+    "name": "Kia Morning",
+    "brand": "Kia",
+    "price": 450000,
+    "seats": 4,
+    "image": "https://cdn.gianhangvn.com/image/kia-morning-1-r5wwr97.jpg"
+  },
+  {
+    "id": "8",
+    "name": "Kia Sorento",
+    "brand": "Kia",
+    "price": 1200000,
+    "seats": 7,
+    "image": "https://kiatruongchinh-tphcm.com/wp-content/uploads/2021/10/hinh-nen-sorento-min.jpg"
+  },
+  {
+    "id": "9",
+    "name": "VinFast Fadil",
+    "brand": "VinFast",
+    "price": 500000,
+    "seats": 5,
+    "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw09a0985f/images/Fadil/Hinh-anh-Mua-xe-VinFast-Fadil-ban-nang-cao-tra-gop-mau-do-Red.png"
+  },
+  {
+    "id": "10",
+    "name": "VinFast Lux A2.0",
+    "brand": "VinFast",
+    "price": 900000,
+    "seats": 5,
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/VinFast_LUX_A2.0_on_display.jpg/1200px-VinFast_LUX_A2.0_on_display.jpg"
+  },
+  {
+    "id": "11",
+    "name": "Ford Ranger",
+    "brand": "Ford",
+    "price": 950000,
+    "seats": 5,
+    "image": "https://fordlongbien.com/wp-content/uploads/2022/08/ford-ranger-xlt-2023-mau-den-icon-fordlongbien_com.jpg"
+  },
+  {
+    "id": "12",
+    "name": "Ford Everest",
+    "brand": "Ford",
+    "price": 1500000,
+    "seats": 7,
+    "image": "https://fordbacninh.com/wp-content/uploads/2022/12/everest-sport-xam.jpg"
+  },
+  {
+    "id": "13",
+    "name": "Mazda 3",
+    "brand": "Mazda",
+    "price": 700000,
+    "seats": 5,
+    "image": "https://mazdamotors.vn/media/2pyj3trw/all-new-mazda3-sport.png"
+  },
+  {
+    "id": "14",
+    "name": "BMW 320i",
+    "brand": "BMW",
+    "price": 2000000,
+    "seats": 5,
+    "image": "https://bmwvietnam.com.vn/wp-content/uploads/2021/07/bmw-320i-lci-sport-line-2023.jpg"
+  },
+  {
+    "id": "15",
+    "name": "Mercedes C300",
+    "brand": "Mercedes",
+    "price": 2300000,
+    "seats": 5,
+    "image": "https://sureshdrives.com/blog/wp-content/uploads/2024/12/c300-mercedes-w206-1.jpg"
+  },
+  {
+    "id": "16",
+    "name": "Audi A4",
+    "brand": "Audi",
+    "price": 2100000,
+    "seats": 5,
+    "image": "https://gialanbanh.vn/wp-content/uploads/2024/03/audi-a4-45-tfsi-quattro.jpg"
+  },
+]

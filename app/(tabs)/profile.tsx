@@ -16,6 +16,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthConText";
 
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../js/config";
+
 type ProfileMenuItemProps = {
   icon: keyof typeof Feather.glyphMap;
   title: string;
@@ -23,17 +26,10 @@ type ProfileMenuItemProps = {
   isLogout?: boolean;
 };
 
-const ProfileMenuItem = ({
-  icon,
-  title,
-  onPress,
-  isLogout = false,
-}: ProfileMenuItemProps) => (
+const ProfileMenuItem = ({ icon, title, onPress, isLogout = false }: ProfileMenuItemProps) => (
   <Pressable style={styles.menuItem} onPress={onPress}>
     <Feather name={icon} size={22} color={isLogout ? "#E53935" : "#333"} />
-    <Text style={[styles.menuTitle, isLogout && styles.logoutText]}>
-      {title}
-    </Text>
+    <Text style={[styles.menuTitle, isLogout && styles.logoutText]}>{title}</Text>
     {!isLogout && <Feather name="chevron-right" size={22} color="#888" />}
   </Pressable>
 );
@@ -42,10 +38,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { userEmail, userName, setUserEmail, setUserName } = useAuth();
 
-  const [userData, setUserData] = useState<{
-    fullname: string;
-    email: string;
-  } | null>(null);
+  const [userData, setUserData] = useState<{ fullname: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
@@ -56,33 +49,38 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const loadUser = async () => {
       try {
-        const res = await fetch(
-          "https://68ff4999e02b16d1753d49db.mockapi.io/users"
-        );
-        const users = await res.json();
-        const currentUser = users.find((u: any) => u.email === userEmail);
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          setLoading(false);
+          return;
+        }
 
-        if (currentUser) {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+
+        if (snap.exists()) {
+          const data = snap.data();
           setUserData({
-            fullname: currentUser.fullname || userName || "Không có tên",
-            email: currentUser.email,
+            fullname: data.fullname || userName || "Không có tên",
+            email: data.email || userEmail || "",
           });
         } else {
-          Alert.alert("Không tìm thấy tài khoản", "Vui lòng đăng nhập lại.");
+          setUserData({
+            fullname: userName || "Không có tên",
+            email: userEmail || "",
+          });
         }
       } catch (error) {
-        console.error("Fetch user error:", error);
+        console.error("Firestore fetch error:", error);
         Alert.alert("Lỗi mạng", "Không thể tải dữ liệu người dùng.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (userEmail) fetchUser();
-    else setLoading(false);
-  }, [userEmail, userName]);
+    loadUser();
+  }, [userName]);
 
   if (loading) {
     return (
@@ -95,17 +93,8 @@ export default function ProfileScreen() {
   if (!userEmail) {
     return (
       <SafeAreaView style={styles.container}>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text
-            style={{
-              fontSize: 16,
-              color: "#555",
-              textAlign: "center",
-              marginBottom: 20,
-            }}
-          >
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 16, color: "#555", textAlign: "center", marginBottom: 20 }}>
             Bạn chưa đăng nhập.{"\n"}Vui lòng đăng nhập để xem hồ sơ.
           </Text>
 
@@ -118,9 +107,7 @@ export default function ProfileScreen() {
               borderRadius: 10,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "600" }}>
-              Đăng nhập ngay
-            </Text>
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Đăng nhập ngay</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -134,7 +121,7 @@ export default function ProfileScreen() {
           <Image
             style={styles.avatar}
             source={{
-              uri: "https://placehold.co/100x100/007AFF/FFFFFF?text=User",
+              uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
             }}
           />
           <Text style={styles.name}>{userData?.fullname || userName}</Text>
@@ -142,58 +129,31 @@ export default function ProfileScreen() {
 
           <Pressable
             style={styles.editButton}
-            onPress={() => router.push("/profile/edit")}
+            onPress={() => router.push("/profile/edit")} // ✔ ABSOLUTE PATH
           >
             <Text style={styles.editButtonText}>Chỉnh sửa hồ sơ</Text>
           </Pressable>
         </View>
 
         <View style={styles.menuContainer}>
-          <ProfileMenuItem
-            icon="settings"
-            title="Cài đặt"
-            onPress={() => console.log("Cài đặt")}
-          />
-
-          <ProfileMenuItem
-            icon="bell"
-            title="Thông báo"
-            onPress={() => router.push("/notifications")}
-          />
-
+          <ProfileMenuItem icon="settings" title="Cài đặt" onPress={() => {}} />
+          <ProfileMenuItem icon="bell" title="Thông báo" onPress={() => router.push("/notifications")} />
           <ProfileMenuItem
             icon="book"
             title="Đơn đặt phòng của tôi"
             onPress={() => router.push("/(reserve)/MyBookingScreen")}
           />
-
-          {/* 🔥 NEW — ĐƠN THUÊ XE CỦA TÔI */}
           <ProfileMenuItem
             icon="truck"
             title="Đơn thuê xe của tôi"
             onPress={() => router.push("/(rent)/MyCarBookingScreen")}
           />
-
-          <ProfileMenuItem
-            icon="credit-card"
-            title="Thanh toán"
-            onPress={() => console.log("Thanh toán")}
-          />
-
-          <ProfileMenuItem
-            icon="help-circle"
-            title="Trung tâm hỗ trợ"
-            onPress={() => console.log("Hỗ trợ")}
-          />
+          <ProfileMenuItem icon="credit-card" title="Thanh toán" onPress={() => {}} />
+          <ProfileMenuItem icon="help-circle" title="Trung tâm hỗ trợ" onPress={() => {}} />
         </View>
 
         <View style={styles.logoutContainer}>
-          <ProfileMenuItem
-            icon="log-out"
-            title="Đăng xuất"
-            onPress={handleLogout}
-            isLogout
-          />
+          <ProfileMenuItem icon="log-out" title="Đăng xuất" onPress={handleLogout} isLogout />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -213,9 +173,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     marginBottom: 15,
   },
+
   avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
   name: { fontSize: 22, fontWeight: "bold", color: "#333" },
   email: { fontSize: 16, color: "#888", marginBottom: 20 },
+
   editButton: {
     backgroundColor: "#0E65B0",
     paddingVertical: 10,
@@ -230,6 +192,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     overflow: "hidden",
   },
+
   menuItem: {
     flexDirection: "row",
     alignItems: "center",

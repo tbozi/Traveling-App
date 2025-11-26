@@ -43,7 +43,6 @@ export default function ReserveLayout() {
         name="HotelBookingFormScreen"
         options={{ headerShown: false }}
       />
-
     </Stack>
   );
 }
