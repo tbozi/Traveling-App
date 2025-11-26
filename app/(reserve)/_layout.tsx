@@ -40,6 +40,7 @@ export default function ReserveLayout() {
           title: "Xác nhận đặt phòng",
         }}
       />
+      <Stack.Screen name="ChatAIScreen" options={{ title: "Trợ lý AI" }} />
     </Stack>
   );
 }

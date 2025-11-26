@@ -197,6 +197,20 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         />
       </ScrollView>
+<Link
+  href="/(reserve)/ChatAIScreen"
+  style={{
+    backgroundColor: "#007bff",
+    padding: 12,
+    marginTop: 20,
+    borderRadius: 10
+  }}
+>
+  <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>
+    Trò chuyện với AI
+  </Text>
+</Link>
+
     </SafeAreaView>
   );
 }
