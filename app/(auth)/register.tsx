@@ -2,6 +2,10 @@ import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../../js/config";
+
 export default function RegisterScreen() {
   const router = useRouter();
   const [fullname, setFullname] = useState("");
@@ -20,21 +24,21 @@ export default function RegisterScreen() {
     }
 
     try {
-      const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullname, email, password }),
+      // 1. Tạo tài khoản bằng Firebase Auth
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+
+      // 2. Lưu thông tin bổ sung vào Firestore
+      await setDoc(doc(db, "users", res.user.uid), {
+        fullname,
+        email,
+        createdAt: new Date(),
       });
 
-      if (res.ok) {
-        Alert.alert("Đăng ký thành công!", "Hãy đăng nhập để tiếp tục.");
-        router.replace("/(auth)/login");
-      } else {
-        Alert.alert("Lỗi", "Không thể đăng ký!");
-      }
-    } catch (error) {
-      console.error("Register error:", error);
-      Alert.alert("Lỗi mạng!");
+      Alert.alert("Đăng ký thành công!", "Hãy đăng nhập để tiếp tục.");
+      router.replace("/(auth)/login");
+    } catch (error: any) {
+      console.log("Register error:", error);
+      Alert.alert("Lỗi", error.message);
     }
   };
 

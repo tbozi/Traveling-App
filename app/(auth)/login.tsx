@@ -4,6 +4,10 @@ import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthConText";
 
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../../js/config";
+
 export default function LoginScreen() {
   const router = useRouter();
   const { setUserEmail, setUserName } = useAuth();
@@ -17,24 +21,26 @@ export default function LoginScreen() {
     }
 
     try {
-      const res = await fetch("https://68ff4999e02b16d1753d49db.mockapi.io/users");
-      const users = await res.json();
+      // Đăng nhập Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      const user = users.find(
-        (u: any) => u.email === email && u.password === password
-      );
+      // Lấy thêm thông tin từ Firestore
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
 
-      if (user) {
-        Alert.alert("Đăng nhập thành công!");
-        setUserEmail(user.email);
-        setUserName(user.fullname || "Người dùng");
-        router.replace("/(tabs)");
-      } else {
-        Alert.alert("Sai thông tin đăng nhập!");
+      if (snap.exists()) {
+        const userData = snap.data();
+        setUserEmail(user.email || "");
+        setUserName(userData.fullname || "Người dùng");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      Alert.alert("Lỗi mạng!");
+
+      Alert.alert("Đăng nhập thành công!");
+      router.replace("/(tabs)");
+
+    } catch (error: any) {
+      console.log("Login error:", error);
+      Alert.alert("Lỗi", error.message);
     }
   };
 
