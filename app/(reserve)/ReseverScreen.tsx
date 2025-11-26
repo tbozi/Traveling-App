@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -97,6 +97,10 @@ export default function ReserveScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ***** IMPORTANT: disable default header from expo-router / native stack ***** */}
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Header custom của mày */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={26} color="#fff" />

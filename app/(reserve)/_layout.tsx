@@ -10,43 +10,40 @@ export default function ReserveLayout() {
         headerTitleStyle: { fontWeight: "bold", fontSize: 18 },
       }}
     >
+
+      {/* 🔥 TẮT HEADER Ở TRANG ĐẦU TIÊN */}
       <Stack.Screen
-        name="ReserveScreen"
+        name="ReseverScreen"
         options={{
-          title: "Đặt phòng",headerShown: true
+          headerShown: false
         }}
       />
+
       <Stack.Screen
         name="SearchResultScreen"
-        options={{
-          title: "Kết quả tìm kiếm",headerShown: false
-        }}
+        options={{ headerShown: false }}
       />
+
       <Stack.Screen
         name="HotelDetailScreen"
-        options={{
-          title: "Chi tiết khách sạn",headerShown: false
-        }}
+        options={{ headerShown: false }}
       />
+
       <Stack.Screen
         name="RoomOptionScreen"
-        options={{
-          title: "Chọn phòng",headerShown: false
-        }}
+        options={{ headerShown: false }}
       />
+
       <Stack.Screen
         name="BookingConfirmScreen"
-        options={{
-          title: "Xác nhận đặt phòng",headerShown: false
-        }}
+        options={{ headerShown: false }}
       />
+
       <Stack.Screen
         name="HotelBookingFormScreen"
-        options={{
-          title: "Thông tin đặt phòng",headerShown: false
-        }}
+        options={{ headerShown: false }}
       />
+
     </Stack>
-    
   );
 }
