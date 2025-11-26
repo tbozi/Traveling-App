@@ -120,7 +120,7 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { height: 60, backgroundColor: "#1E90FF", justifyContent: "center", alignItems: "center", paddingTop: 10 },
+  header: { height: 60, backgroundColor: "#013687", justifyContent: "center", alignItems: "center", paddingTop: 0 },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   empty: { fontSize: 18, color: "#888", marginTop: 50 },

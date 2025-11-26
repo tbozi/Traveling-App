@@ -17,25 +17,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthConText";
 import { db } from "../../js/config";
 
-interface Booking {
+interface CarBooking {
   id: string;
-  hotelName: string;
-  roomName: string;
+  carName: string;
+  brand: string;
+  seats: number;
   price: number;
-  guests: number;
-  beds: string;
-  status: string;
-  image?: string;
+  pickup: string;
+  dropoff: string;
+  image: string;
+  status: "pending" | "confirmed" | "canceled";
   createdAt?: { seconds: number };
 }
 
-export default function MyBookingScreen() {
+export default function MyCarBookingScreen() {
   const { userEmail } = useAuth();
   const router = useRouter();
 
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filtered, setFiltered] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<CarBooking[]>([]);
+  const [filtered, setFiltered] = useState<CarBooking[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,21 +46,22 @@ export default function MyBookingScreen() {
       if (!userEmail) return;
 
       setLoading(true);
-
       const snap = await getDocs(
-        query(collection(db, "bookings"), where("userEmail", "==", userEmail))
+        query(collection(db, "carBookings"), where("userEmail", "==", userEmail))
       );
 
       const list = snap.docs.map((doc) => ({
         id: doc.id,
-        image: doc.data().image || "",
         ...doc.data(),
-      })) as Booking[];
+      })) as CarBooking[];
 
+      // 🔥 Sort mới nhất → cũ nhất
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
       setBookings(list);
       applyFilter("all", list);
+    } catch (err) {
+      console.error("🔥 Lỗi tải car bookings:", err);
     } finally {
       setLoading(false);
     }
@@ -86,11 +89,23 @@ export default function MyBookingScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#0071C2" />
-        <Text>Đang tải lịch sử đặt phòng...</Text>
+        <Text>Đang tải đơn thuê xe...</Text>
       </SafeAreaView>
     );
 
-  const renderItem = ({ item }: { item: Booking }) => {
+  const getStatusColor = (status: string) => {
+    if (status === "confirmed") return "green";
+    if (status === "canceled") return "red";
+    return "#FFB800";
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "confirmed") return "Đã xác nhận";
+    if (status === "canceled") return "Đã hủy";
+    return "Đang chờ";
+  };
+
+  const renderItem = ({ item }: { item: CarBooking }) => {
     const date = item.createdAt
       ? new Date(item.createdAt.seconds * 1000).toLocaleString("vi-VN")
       : "—";
@@ -99,31 +114,27 @@ export default function MyBookingScreen() {
       <TouchableOpacity
         style={styles.card}
         onPress={() =>
-          router.push({ pathname: "/(reserve)/BookingDetailScreen", params: { id: item.id } })
+          router.push({
+            pathname: "/(rent)/CarBookingDetailScreen",
+            params: { id: item.id },
+          })
         }
       >
-        <Image
-          source={{ uri: item.image || "https://cdn-icons-png.flaticon.com/512/148/148767.png" }}
-          style={styles.image}
-        />
+        <Image source={{ uri: item.image }} style={styles.image} />
+
         <View style={{ flex: 1 }}>
-          <Text style={styles.hotel}>{item.hotelName}</Text>
-          <Text style={styles.room}>{item.roomName}</Text>
-          <Text style={styles.info}>👥 {item.guests} khách · 🛏️ {item.beds}</Text>
+          <Text style={styles.car}>{item.carName}</Text>
+          <Text style={styles.info}>🚗 {item.brand}</Text>
+          <Text style={styles.info}>👥 {item.seats} chỗ</Text>
 
-          <Text style={styles.price}>💰 {item.price.toLocaleString()}₫ / đêm</Text>
+          <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
+            ● {getStatusLabel(item.status)}
+          </Text>
 
-          <Text
-            style={[
-              styles.status,
-              item.status === "cancelled"
-                ? { color: "red" }
-                : item.status === "confirmed"
-                ? { color: "green" }
-                : { color: "#FFB800" },
-            ]}
-          >
-            ● {item.status}
+          <Text style={styles.price}>💰 {item.price.toLocaleString()}₫ / ngày</Text>
+
+          <Text style={styles.location}>
+            📍 {item.pickup} → {item.dropoff}
           </Text>
 
           <Text style={styles.date}>📅 {date}</Text>
@@ -135,19 +146,24 @@ export default function MyBookingScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
+
       <SafeAreaView style={styles.container}>
+        {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={26} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Danh sách đặt phòng</Text>
-        </View>
+          <Text style={styles.headerTitle}>Danh sách thuê xe</Text>
+        </View> 
+
+
+        {/* FILTER TABS giống MyBookingScreen */}
         <View style={styles.filterRow}>
           {[
             { key: "all", label: "Tất cả" },
             { key: "pending", label: "Đang chờ" },
             { key: "confirmed", label: "Xác nhận" },
-            { key: "cancelled", label: "Đã hủy" },
+            { key: "canceled", label: "Đã hủy" },
           ].map((tab) => (
             <TouchableOpacity
               key={tab.key}
@@ -169,6 +185,7 @@ export default function MyBookingScreen() {
           ))}
         </View>
 
+        {/* LIST */}
         <FlatList
           data={filtered}
           renderItem={renderItem}
@@ -195,7 +212,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ececec",
   },
   backBtn: {
-    marginRight: 55,
+    marginRight: 70,
     padding: 4,
   },
   headerTitle: {
@@ -203,6 +220,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#fff",
   },
+
   filterRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -216,7 +234,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
   },
-  filterBtnActive: { backgroundColor: "#0071C2" },
+  filterBtnActive: {
+    backgroundColor: "#013687",
+  },
 
   filterText: { fontSize: 14, color: "#333" },
   filterTextActive: { color: "#fff", fontWeight: "700" },
@@ -228,13 +248,23 @@ const styles = StyleSheet.create({
     margin: 10,
     padding: 10,
     elevation: 2,
-    alignItems: "center",
   },
-  image: { width: 60, height: 60, marginRight: 10 },
-  hotel: { fontSize: 16, fontWeight: "700", color: "#0071C2" },
-  room: { fontSize: 14, color: "#333" },
+
+  image: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+
+  car: { fontSize: 16, fontWeight: "700", color: "#0071C2" },
   info: { fontSize: 13, color: "#555", marginTop: 2 },
-  price: { fontWeight: "700", marginTop: 4 },
+
   status: { marginTop: 4, fontWeight: "700" },
-  date: { color: "#888", fontSize: 12, marginTop: 2 },
+
+  location: { fontSize: 13, color: "#555", marginTop: 4 },
+
+  price: { fontWeight: "700", fontSize: 14, marginTop: 4 },
+
+  date: { color: "#888", fontSize: 12, marginTop: 4 },
 });

@@ -1,21 +1,21 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Ionicons } from "@expo/vector-icons";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../js/config"; // ✅ Firebase config
-
 interface Place {
   id: string;
   title: string;
@@ -29,7 +29,7 @@ export default function SearchScreen() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
-
+ const router = useRouter();
   useEffect(() => {
     fetchPlaces();
   }, []);
@@ -66,9 +66,12 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tìm kiếm</Text>
-      </View>
+     <View style={styles.header}>
+               <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                 <Ionicons name="chevron-back" size={26} color="#fff" />
+               </TouchableOpacity>
+               <Text style={styles.headerTitle}>Tìm kiếm</Text>
+             </View>
 
       <TextInput
         placeholder="Tìm kiếm địa điểm..."
@@ -105,14 +108,33 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
+  // header: {
+  //   height: 60,
+  //   backgroundColor: "#013687",
+  //   justifyContent: "center",
+  //   alignItems: "center",
+
+  // },
   header: {
-    height: 60,
-    backgroundColor: "#1E90FF",
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    paddingTop: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "#013687",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
+
   },
-  headerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
+  backBtn: {
+    marginRight: 110,
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  // headerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
   input: {
     margin: 12,
     padding: 10,

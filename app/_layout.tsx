@@ -19,10 +19,13 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="details/[id]"
-          options={{ title: "Place Details" }}
+          options={{ title: "Chi tiết địa điểm", headerShown: false}}
         />
         <Stack.Screen
           name="(reserve)"
+          options={{ headerShown: false }}
+        /><Stack.Screen
+          name="(rent)"
           options={{ headerShown: false }}
         />
       </Stack>

@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../js/config";
@@ -125,7 +125,14 @@ export default function PlaceDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      
+          <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={26} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chi tiết địa điểm</Text>
+      </View>
+<ScrollView style={styles.container}>
         <Image source={{ uri: place.image }} style={styles.image} />
 
         <View style={styles.content}>
@@ -189,6 +196,18 @@ export default function PlaceDetailScreen() {
         >
           <Text style={styles.bookButtonText}>Đặt phòng</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={() =>
+            router.push({
+              pathname: "/(rent)/RentCarScreen",
+              params: { id: place.id, destination: place.title },
+            })
+          }
+        >
+          <Text style={styles.bookButtonText}>Thuê xe</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -207,7 +226,7 @@ const styles = StyleSheet.create({
   reviewButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#0E65B0",
     padding: 12,
     borderRadius: 8,
     marginTop: 20,
@@ -225,7 +244,7 @@ const styles = StyleSheet.create({
   reviewComment: { color: "#444", marginTop: 4 },
   noReviewsText: { color: "#888", fontStyle: "italic" },
   bookButton: {
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#0E65B0",
     padding: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -244,4 +263,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8F0FE",
   },
   moreButtonText: { color: "#1E90FF", fontWeight: "600" },
+    header: {
+    color: "#013687",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "#013687",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
+  },
+  backBtn: {
+    marginRight: 80,
+    padding: 4,
+    
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    textAlign: "center",
+
+  },
 });

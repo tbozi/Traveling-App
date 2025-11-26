@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   FlatList,
@@ -27,16 +28,15 @@ interface Place {
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const [places, setPlaces] = useState<Place[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const categories: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
-    { icon: "airplane-outline", label: "Flights" },
-    { icon: "bed-outline", label: "Hotels" },
-    { icon: "navigate-outline", label: "Trips" },
-    { icon: "restaurant-outline", label: "Food" },
-    { icon: "car-outline", label: "Rent Car" },
+  const categories = [
+    { icon: "bed-outline" as const, label: "Khách sạn" },
+    { icon: "car-outline" as const, label: "Thuê xe" },
   ];
 
   useEffect(() => {
@@ -105,9 +105,16 @@ export default function HomeScreen() {
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.location}>{item.location}</Text>
-              <Text style={styles.desc} numberOfLines={2}>{item.desc}</Text>
+              <Text style={styles.desc} numberOfLines={2}>
+                {item.desc}
+              </Text>
               <Text style={styles.typeTag}>
-                Loại: {item.type === "hot" ? "🔥 Hot" : item.type === "offer" ? "💸 Offer" : item.type}
+                Loại:{" "}
+                {item.type === "hot"
+                  ? "🔥 Hot"
+                  : item.type === "offer"
+                  ? "💸 Offer"
+                  : item.type}
               </Text>
             </View>
           </TouchableOpacity>
@@ -130,15 +137,15 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
-              source={{ uri: "https://cdn-icons-png.flaticon.com/512/69/69906.png" }}
+              source={require("../(tabs)/logo.png")}
               style={styles.logo}
             />
-            <Text style={styles.titleHeader}>Traveling App</Text>
+            {/* <Text style={styles.titleHeader}>GoJourney</Text> */}
           </View>
           <Link href="/notifications" asChild>
             <TouchableOpacity>
@@ -146,27 +153,47 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Link>
         </View>
-
+<ScrollView>
         {/* Search Bar */}
-        <View style={styles.searchBox}>
+        <TouchableOpacity
+          style={styles.searchBox}
+          onPress={() =>
+            router.push({
+              pathname: "/search",
+            })
+          }
+        >
           <Ionicons name="search" size={20} color="#888" />
           <Text style={{ marginLeft: 8, color: "#666" }}>Search destination...</Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
           {categories.map((c, i) => (
-            <View key={i} style={styles.categoryItem}>
-              <Ionicons name={c.icon} size={28} />
+            <TouchableOpacity
+              key={i}
+              style={styles.categoryItem}
+              onPress={() => {
+                if (c.label === "Khách sạn") {
+                  router.push("/search"); // trang Khách sạn placeholder
+                }
+                if (c.label === "Thuê xe") {
+                  router.push("/search"); // trang Thuê xe placeholder
+                }
+              }}
+            >
+              <Ionicons name={c.icon} size={55} />
               <Text style={styles.categoryText}>{c.label}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
 
         {/* Banner */}
         <View style={styles.banner}>
           <Image
-            source={{ uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e" }}
+            source={{
+              uri: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+            }}
             style={styles.bannerImg}
           />
           <View style={styles.bannerTextBox}>
@@ -204,18 +231,56 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F7FA" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 16,
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: "#1E90FF",
+    backgroundColor: "#013687",
   },
   headerLeft: { flexDirection: "row", alignItems: "center" },
-  logo: { width: 40, height: 40, marginRight: 10 },
-  titleHeader: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-  sectionTitle: { fontSize: 20, fontWeight: "700", marginTop: 20, marginBottom: 10, marginLeft: 16 },
+  logo: { width: 90, height: 60, marginRight: 10 },
+  titleHeader: { fontSize: 22, fontWeight: "bold", color: "#FFEFAA", fontStyle: "italic" },
+
+  searchBox: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#52565b",
+  },
+
+  categoryRow: { marginTop: 16, paddingHorizontal: 16 },
+  categoryItem: { alignItems: "center", marginRight: 20 },
+  categoryText: { marginTop: 4, fontSize: 12, fontWeight: "500", color: "#444" },
+
+  banner: {
+    marginTop: 18,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    overflow: "hidden",
+    position: "relative",
+  },
+  bannerImg: { width: "100%", height: 150 },
+  bannerTextBox: { position: "absolute", bottom: 15, left: 15 },
+  bannerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
+  bannerSub: { fontSize: 14, color: "#eee", marginTop: 4 },
+
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 10,
+    marginLeft: 16,
+  },
+
+  // card styles
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -239,29 +304,4 @@ const styles = StyleSheet.create({
   location: { color: "#666", fontSize: 13, marginTop: 2 },
   desc: { color: "#444", fontSize: 13, marginTop: 4 },
   typeTag: { marginTop: 6, color: "#1E90FF", fontWeight: "600" },
-  searchBox: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  categoryRow: { marginTop: 16, paddingHorizontal: 16 },
-  categoryItem: { alignItems: "center", marginRight: 20 },
-  categoryText: { marginTop: 4, fontSize: 12, fontWeight: "500", color: "#444" },
-  banner: {
-    marginTop: 18,
-    marginHorizontal: 16,
-    borderRadius: 14,
-    overflow: "hidden",
-    position: "relative",
-  },
-  bannerImg: { width: "100%", height: 150 },
-  bannerTextBox: { position: "absolute", bottom: 15, left: 15 },
-  bannerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
-  bannerSub: { fontSize: 14, color: "#eee", marginTop: 4 },
 });

@@ -1,84 +1,96 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../context/AuthConText";
-import { db } from "../../js/config";
 
 export default function BookingConfirmScreen() {
   const router = useRouter();
-  const { hotelName, roomName, price, image, guests, beds } = useLocalSearchParams<{
+
+  const params = useLocalSearchParams<{
     hotelName: string;
     roomName: string;
     price: string;
-    image: string;
+    image: string | string[];
     guests: string;
     beds: string;
+    checkInDate: string;
+    checkOutDate: string;
+    nights: string;
   }>();
 
-  const { userEmail } = useAuth();
+  const image = Array.isArray(params.image) ? params.image[0] : params.image;
 
-  const handleReserve = async () => {
-    try {
-      if (!userEmail) {
-        Alert.alert("Cần đăng nhập", "Vui lòng đăng nhập để đặt phòng!");
-        router.replace("/(auth)/login");
-        return;
-      }
-
-      await addDoc(collection(db, "bookings"), {
-        userEmail,
-        hotelName,
-        roomName,
-        price: Number(price),
-        guests: Number(guests),
-        beds,
-        createdAt: serverTimestamp(),
-      });
-
-      router.replace({
-        pathname: "/(reserve)/BookingSuccessScreen",
-        params: { hotelName },
-      });
-    } catch (error) {
-      console.error("Lỗi khi lưu đơn đặt phòng:", error);
-      Alert.alert("Lỗi", "Không thể lưu thông tin đặt phòng.");
-    }
-  };
+  const pricePerNight = Number(params.price);
+  const nights = Number(params.nights || "1");
+  const totalAmount = pricePerNight * nights;
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={26} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Xác nhận đặt phòng</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container}>
         {image && <Image source={{ uri: image }} style={styles.image} />}
 
         <View style={styles.infoBox}>
-          <Text style={styles.hotel}>{hotelName}</Text>
-          <Text style={styles.room}>{roomName}</Text>
+          <Text style={styles.hotel}>{params.hotelName}</Text>
+          <Text style={styles.room}>{params.roomName}</Text>
 
-          <View style={{ marginTop: 10 }}>
-            <Text style={styles.detail}>👥 {guests} khách</Text>
-            <Text style={styles.detail}>🛏️ {beds}</Text>
+          <Text style={styles.detail}>📅 Nhận phòng: {params.checkInDate}</Text>
+          <Text style={styles.detail}>📅 Trả phòng: {params.checkOutDate}</Text>
+          <Text style={styles.detail}>⏳ {nights} đêm</Text>
+          <Text style={styles.detail}>👥 {params.guests} khách</Text>
+          <Text style={styles.detail}>🛏️ {params.beds}</Text>
+
+          <Text style={styles.price}>💰 {pricePerNight.toLocaleString()}₫ / đêm</Text>
+        </View>
+
+        <View style={styles.priceBox}>
+          <Text style={styles.priceTitle}>Tổng giá cho {nights} đêm</Text>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Giá mỗi đêm</Text>
+            <Text style={styles.priceValue}>{pricePerNight.toLocaleString()}₫</Text>
           </View>
 
-          <Text style={styles.price}>💰 Giá: {price} / đêm</Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Số đêm</Text>
+            <Text style={styles.priceValue}>{nights}</Text>
+          </View>
 
-          <View style={styles.policyBox}>
-            <Text>🔁 Miễn phí huỷ phòng</Text>
-            <Text>✅ Thanh toán tại chỗ nghỉ</Text>
-            <Text style={{ color: "green" }}>💳 Không cần thẻ tín dụng</Text>
+          <View style={styles.separator} />
+
+          <View style={styles.priceRow}>
+            <Text style={styles.totalText}>Tổng cộng</Text>
+            <Text style={styles.totalAmount}>{totalAmount.toLocaleString()}₫</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleReserve}>
-          <Text style={styles.buttonText}>Xác nhận đặt phòng</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            router.push({
+              pathname: "/(reserve)/HotelBookingFormScreen",
+              params: {
+                ...params,
+                totalAmount,
+              },
+            })
+          }
+        >
+          <Text style={styles.buttonText}>Điền thông tin người đặt</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.cancel} onPress={() => router.back()}>
@@ -91,32 +103,61 @@ export default function BookingConfirmScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: { padding: 16 },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  infoBox: { marginBottom: 20 },
-  hotel: { fontSize: 20, fontWeight: "700", color: "#0071C2" },
-  room: { fontSize: 18, fontWeight: "600", color: "#222", marginTop: 4 },
-  detail: { color: "#333", marginVertical: 2 },
-  price: { fontSize: 16, fontWeight: "700", marginTop: 10 },
-  policyBox: {
-    backgroundColor: "#F9FBFF",
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  button: {
-    backgroundColor: "#0071C2",
-    borderRadius: 8,
-    paddingVertical: 14,
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "#013687",
   },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  cancel: { alignItems: "center" },
-  cancelText: { color: "#0071C2", fontWeight: "600" },
+  backBtn: { marginRight: 70, padding: 4 },
+  headerTitle: { color: "#fff", fontWeight: "700", fontSize: 20 },
+
+  container: { padding: 16 },
+
+  image: { width: "100%", height: 200, borderRadius: 10 },
+
+  infoBox: { marginVertical: 20 },
+  hotel: { fontSize: 22, fontWeight: "700" },
+  room: { fontSize: 18, fontWeight: "600", marginTop: 4 },
+
+  detail: { color: "#444", marginTop: 6 },
+
+  price: { fontWeight: "700", marginTop: 15 },
+
+  priceBox: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    backgroundColor: "#f9fbff",
+  },
+
+  priceTitle: { fontSize: 18, fontWeight: "700", marginBottom: 10 },
+
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 4,
+  },
+
+  priceLabel: { fontSize: 15 },
+  priceValue: { fontSize: 15, fontWeight: "700" },
+
+  separator: { height: 1, backgroundColor: "#ddd", marginVertical: 10 },
+
+  totalText: { fontSize: 17, fontWeight: "700" },
+  totalAmount: { fontSize: 17, fontWeight: "700", color: "#0E65B0" },
+
+  button: {
+    backgroundColor: "#0E65B0",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  buttonText: { color: "#fff", fontWeight: "700" },
+
+  cancel: { alignItems: "center", marginTop: 10 },
+  cancelText: { color: "#1E90FF", fontWeight: "600" },
 });

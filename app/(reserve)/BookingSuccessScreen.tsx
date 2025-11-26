@@ -7,35 +7,21 @@ export default function BookingSuccessScreen() {
   const { hotelName } = useLocalSearchParams<{ hotelName: string }>();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Image
-          source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/148/148767.png",
-          }}
+          source={{ uri: "https://cdn-icons-png.flaticon.com/512/190/190411.png" }}
           style={styles.icon}
         />
 
         <Text style={styles.title}>🎉 Đặt phòng thành công!</Text>
         <Text style={styles.desc}>
           Cảm ơn bạn đã đặt phòng tại{" "}
-          <Text style={{ fontWeight: "700", color: "#0071C2" }}>
-            {hotelName}
-          </Text>
+          <Text style={{ fontWeight: "700", color: "#0071C2" }}>{hotelName}</Text>
         </Text>
 
-        <TouchableOpacity
-          style={styles.homeButton}
-          onPress={() => router.replace("/(tabs)")}
-        >
-          <Text style={styles.homeText}>🏠 Quay về Trang chủ</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace("/(tabs)/search")}
-        >
-          <Text style={styles.backText}>🔍 Tiếp tục tìm khách sạn khác</Text>
+        <TouchableOpacity style={styles.btn} onPress={() => router.replace("/(tabs)")}>
+          <Text style={styles.btnText}>Quay về Trang chủ</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -43,29 +29,17 @@ export default function BookingSuccessScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
+  safe: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   icon: { width: 120, height: 120, marginBottom: 20 },
   title: { fontSize: 24, fontWeight: "700", color: "#0071C2" },
-  desc: {
-    fontSize: 16,
-    color: "#444",
-    textAlign: "center",
-    marginVertical: 10,
-  },
-  homeButton: {
+  desc: { textAlign: "center", marginTop: 10, color: "#444" },
+  btn: {
     backgroundColor: "#0071C2",
-    paddingVertical: 14,
-    paddingHorizontal: 40,
+    padding: 14,
     borderRadius: 10,
     marginTop: 20,
+    width: "80%",
   },
-  homeText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  backButton: { marginTop: 15 },
-  backText: { color: "#0071C2", fontWeight: "600" },
+  btnText: { color: "#fff", fontWeight: "700", textAlign: "center" },
 });

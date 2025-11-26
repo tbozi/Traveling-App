@@ -1,123 +1,150 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../context/AuthConText";
 import { db } from "../../js/config";
 
-interface Booking {
-  id: string;
-  hotelName: string;
-  roomName: string;
-  price: number;
-  guests: number;
-  beds: string;
-  createdAt?: { seconds: number };
-}
-
 export default function BookingDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { userEmail } = useAuth();
-
-  const [booking, setBooking] = useState<Booking | null>(null);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchBooking = async () => {
+    try {
+      const snap = await getDoc(doc(db, "bookings", id));
+      if (snap.exists()) setBooking({ id: snap.id, ...snap.data() });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBookingDetail = async () => {
-      try {
-        if (!id) return;
-        const docRef = doc(db, "bookings", id);
-        const docSnap = await getDoc(docRef);
+    fetchBooking();
+  }, []);
 
-        if (docSnap.exists()) {
-          setBooking({ id: docSnap.id, ...docSnap.data() } as Booking);
-        }
-      } catch (err) {
-        console.error("Lỗi khi tải chi tiết đặt phòng:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleCancel = async () => {
+    Alert.alert("Xác nhận", "Bạn có chắc muốn hủy đơn?", [
+      { text: "Không" },
+      {
+        text: "Hủy",
+        style: "destructive",
+        onPress: async () => {
+          await updateDoc(doc(db, "bookings", booking.id), {
+            status: "cancelled",
+          });
+          router.back();
+        },
+      },
+    ]);
+  };
 
-    fetchBookingDetail();
-  }, [id]);
+  const handleDelete = async () => {
+    Alert.alert("Xóa đơn", "Bạn chắc chắn xóa vĩnh viễn?", [
+      { text: "Không" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          await deleteDoc(doc(db, "bookings", booking.id));
+          router.back();
+        },
+      },
+    ]);
+  };
 
-  if (loading)
+  const handleEdit = () => {
+    router.push({
+      pathname: "/(reserve)/BookingEditScreen",
+      params: { ...booking },
+    });
+  };
+
+  if (loading || !booking)
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator size="large" color="#0071C2" />
-        <Text>Đang tải chi tiết đặt phòng...</Text>
       </SafeAreaView>
     );
 
-  if (!booking)
-    return (
-      <SafeAreaView style={styles.center}>
-        <Text>Không tìm thấy thông tin đặt phòng.</Text>
-      </SafeAreaView>
-    );
-
-  const date = booking.createdAt
+  const createdDate = booking.createdAt
     ? new Date(booking.createdAt.seconds * 1000).toLocaleString("vi-VN")
     : "—";
 
-  return (
+return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
-        </View>
+      <View style={styles.container}>
+        {loading || !booking ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#0071C2" />
+          </View>
+        ) : (
+          <ScrollView>
+            
+            {/* 🔵 HEADER CUSTOM */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="chevron-back" size={26} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Chi tiết đặt phòng</Text>
+            </View>
 
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <View style={styles.card}>
-            <Image
-              source={{
-                uri: "https://cdn-icons-png.flaticon.com/512/148/148767.png",
-              }}
-              style={styles.image}
-            />
+            <View style={styles.content}>
+              {booking.image && (
+                <Image source={{ uri: booking.image }} style={styles.image} />
+              )}
 
-            <View style={{ flex: 1 }}>
               <Text style={styles.hotel}>{booking.hotelName}</Text>
               <Text style={styles.room}>{booking.roomName}</Text>
-              <Text style={styles.info}>
-                👥 {booking.guests} khách · 🛏️ {booking.beds}
-              </Text>
-              <Text style={styles.price}>
-                💰 {booking.price?.toLocaleString()}₫ / đêm
-              </Text>
-              <Text style={styles.date}>📅 Ngày đặt: {date}</Text>
+
+              {/* info */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>👤 Người đặt</Text>
+                <Text style={styles.item}>Họ tên: {booking.lastName} {booking.firstName}</Text>
+                <Text style={styles.item}>Email: {booking.email}</Text>
+                <Text style={styles.item}>SĐT: {booking.phone}</Text>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>🏨 Thông tin phòng</Text>
+                <Text style={styles.item}>Khách: {booking.guests}</Text>
+                <Text style={styles.item}>Giường: {booking.beds}</Text>
+                <Text style={styles.item}>
+                  Giá: {booking.price.toLocaleString()}₫ / đêm
+                </Text>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>📌 Trạng thái</Text>
+                <Text style={styles.item}>Đơn: {booking.status}</Text>
+              </View>
+
+              {/* Buttons */}
+              <TouchableOpacity style={styles.editBtn} onPress={handleEdit}>
+                <Text style={styles.editText}>✏️ Sửa thông tin đặt phòng</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+                <Text style={styles.cancelText}>❌ Hủy đặt phòng</Text>
+              </TouchableOpacity>
+
             </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Thông tin liên hệ</Text>
-            <Text>🏨 Khách sạn: {booking.hotelName}</Text>
-            <Text>📧 Email người đặt: {userEmail || "Chưa xác định"}</Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trạng thái</Text>
-            <Text>✅ Đã xác nhận đặt phòng</Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        )}
+      </View>
     </>
   );
 }
@@ -125,52 +152,38 @@ export default function BookingDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    backgroundColor: "#0071C2",
+ header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
-    paddingBottom: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
+    backgroundColor: "#013687",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
+  },
+  backBtn: {
+    marginRight: 80,
+    padding: 4,
   },
   headerTitle: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 18,
-    marginLeft: 10,
-  },
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#F9FBFF",
-    borderRadius: 10,
-    marginBottom: 15,
-    padding: 12,
-    elevation: 2,
-    alignItems: "center",
-  },
-  image: { width: 80, height: 80, marginRight: 12 },
-  hotel: { fontSize: 18, fontWeight: "700", color: "#0071C2" },
-  room: { fontSize: 16, color: "#333" },
-  info: { fontSize: 14, color: "#555", marginTop: 2 },
-  price: { fontWeight: "700", color: "#000", marginTop: 4 },
-  date: { color: "#888", fontSize: 13, marginTop: 2 },
-  section: { marginTop: 20 },
-  sectionTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "700",
-    marginBottom: 6,
-    color: "#0071C2",
-  },
-  backButton: {
-    backgroundColor: "#0071C2",
-    borderRadius: 8,
-    paddingVertical: 14,
-    marginTop: 30,
-    alignItems: "center",
-  },
-  backButtonText: {
     color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
   },
+  content: { padding: 16 },
+  image: { width: "100%", height: 180, borderRadius: 10, marginBottom: 16 },
+  hotel: { fontSize: 20, fontWeight: "700", color: "#0071C2" },
+  room: { fontSize: 16, marginBottom: 16 },
+  section: { backgroundColor: "#F5F8FF", padding: 14, borderRadius: 10, marginTop: 16 },
+  sectionTitle: { fontWeight: "700", marginBottom: 6 },
+  item: { marginBottom: 4 },
+
+  editBtn: { backgroundColor: "#0E65B0", padding: 14, borderRadius: 8, marginTop: 16 },
+  editText: { textAlign: "center", color: "#fff", fontWeight: "700" },
+
+  cancelBtn: { backgroundColor: "#FFB800", padding: 14, borderRadius: 8, marginTop: 12 },
+  cancelText: { textAlign: "center", color: "#fff", fontWeight: "700" },
+
+  deleteBtn: { backgroundColor: "red", padding: 14, borderRadius: 8, marginTop: 12 },
+  deleteText: { color: "#fff", textAlign: "center", fontWeight: "700" },
 });
