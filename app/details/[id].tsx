@@ -13,7 +13,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { db } from "../../js/config";
+
 
 interface Place {
   id: string;
