@@ -153,15 +153,7 @@ export default function CarBookingFormScreen() {
           />
         </View>
 
-        {/* FLIGHT (optional) */}
-        <View style={styles.box}>
-          <Text style={styles.label}>Mã chuyến bay (nếu có)</Text>
-          <TextInput
-            style={styles.input}
-            value={flight}
-            onChangeText={setFlight}
-          />
-        </View>
+      
 
         {/* BUTTON */}
         <TouchableOpacity style={styles.nextBtn} onPress={handleSubmit}>

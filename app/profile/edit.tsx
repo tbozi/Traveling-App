@@ -20,9 +20,10 @@ import { auth, db } from "../../js/config";
 
 import { useAuth } from "../../context/AuthConText";
 
-export const options = {
-  headerShown: false, // ✔ TẮT HEADER EXPO ROUTER
+export const screenOptions = {
+  headerShown: false, // TẮT HEADER
 };
+
 
 export default function EditProfileScreen() {
   const router = useRouter();

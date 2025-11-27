@@ -191,24 +191,12 @@ export default function PlaceDetailScreen() {
           style={styles.bookButton}
           onPress={() =>
             router.push({
-              pathname: "/(reserve)/ReseverScreen",
+              pathname: "/(reserve)/ReserveScreen",
               params: { id: place.id, destination: place.title },
             })
           }
         >
           <Text style={styles.bookButtonText}>Đặt phòng</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.bookButton}
-          onPress={() =>
-            router.push({
-              pathname: "/(rent)/RentCarScreen",
-              params: { id: place.id, destination: place.title },
-            })
-          }
-        >
-          <Text style={styles.bookButtonText}>Thuê xe</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

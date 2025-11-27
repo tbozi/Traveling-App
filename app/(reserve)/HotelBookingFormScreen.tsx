@@ -41,54 +41,55 @@ export default function HotelBookingFormScreen() {
   const isValidPhone = (txt: string) => /^[0-9]{10}$/.test(txt);
 
   const handleNext = async () => {
-    if (!firstName || !lastName || !email || !phone) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ.");
-      return;
-    }
+  if (!firstName || !lastName || !email || !phone) {
+    Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ.");
+    return;
+  }
 
-    if (!isValidEmail(email)) {
-      Alert.alert("Email không hợp lệ", "Vui lòng nhập đúng định dạng email.");
-      return;
-    }
+  if (!isValidEmail(email)) {
+    Alert.alert("Email không hợp lệ", "Vui lòng nhập đúng định dạng email.");
+    return;
+  }
 
-    if (!isValidPhone(phone)) {
-      Alert.alert("Sai số điện thoại", "Số điện thoại phải gồm đúng 10 chữ số.");
-      return;
-    }
+  if (!isValidPhone(phone)) {
+    Alert.alert("Sai số điện thoại", "Số điện thoại phải gồm đúng 10 chữ số.");
+    return;
+  }
 
-    try {
-      await addDoc(collection(db, "bookings"), {
+  try {
+    await addDoc(collection(db, "bookings"), {
+      hotelName: params.hotelName,
+      roomName: params.roomName,
+      price: Number(params.price),
+      image: params.image,
+      guests: params.guests,
+      beds: params.beds,
+      checkInDate: params.checkInDate,
+      checkOutDate: params.checkOutDate,
+      nights: Number(params.nights),
+      totalAmount: Number(params.totalAmount),
+      firstName,
+      lastName,
+      email,
+      phone,
+      userEmail,
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
+
+    router.push({
+      pathname: "/(reserve)/PaymentScreen",
+      params: {
         hotelName: params.hotelName,
-        roomName: params.roomName,
-        price: Number(params.price),
-        image: params.image,
-        guests: params.guests,
-        beds: params.beds,
+        totalAmount: params.totalAmount,
+      },
+    });
+  } catch (err) {
+    console.log("Booking error:", err);
+    Alert.alert("Lỗi", "Không thể tạo đơn đặt phòng.");
+  }
+};
 
-        checkInDate: params.checkInDate,
-        checkOutDate: params.checkOutDate,
-        nights: Number(params.nights),
-        totalAmount: Number(params.totalAmount),
-
-        firstName,
-        lastName,
-        email,
-        phone,
-        userEmail,
-
-        status: "confirmed",
-        createdAt: serverTimestamp(),
-      });
-
-      router.replace({
-        pathname: "/(reserve)/BookingSuccessScreen",
-        params: { hotelName: params.hotelName },
-      });
-    } catch (err) {
-      console.log("Booking error:", err);
-      Alert.alert("Lỗi", "Không thể tạo đơn đặt phòng.");
-    }
-  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>

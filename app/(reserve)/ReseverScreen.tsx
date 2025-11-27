@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -33,16 +34,33 @@ export default function ReserveScreen() {
 
     if (pickerType === "checkin") {
       setCheckInDate(formatted);
+
+      // Reset checkout nếu checkout < checkin
+      if (checkOutDate && new Date(checkOutDate) <= new Date(formatted)) {
+        setCheckOutDate("");
+      }
     }
 
     if (pickerType === "checkout") {
+      if (!checkInDate) {
+        Alert.alert("Lỗi", "Hãy chọn ngày nhận phòng trước.");
+        setPickerType(null);
+        return;
+      }
+
+      if (new Date(formatted) <= new Date(checkInDate)) {
+        Alert.alert("Lỗi", "Ngày trả phòng phải sau ngày nhận phòng.");
+        setPickerType(null);
+        return;
+      }
+
       setCheckOutDate(formatted);
     }
 
     setPickerType(null);
   };
 
-  // Cho phép số đêm âm hoặc 0 (KHÔNG CHECK RÀNG BUỘC)
+  // Tính số đêm
   const calculateNights = () => {
     if (!checkInDate || !checkOutDate) return 0;
     const inDate = new Date(checkInDate);
@@ -52,6 +70,16 @@ export default function ReserveScreen() {
   };
 
   const handleSearch = () => {
+    if (!checkInDate || !checkOutDate) {
+      Alert.alert("Thiếu thông tin", "Vui lòng chọn ngày nhận và trả phòng.");
+      return;
+    }
+
+    if (Number(adults) < 1) {
+      Alert.alert("Lỗi", "Phải có ít nhất 1 người lớn.");
+      return;
+    }
+
     const nights = calculateNights();
 
     router.push({
@@ -59,7 +87,7 @@ export default function ReserveScreen() {
       params: {
         checkInDate,
         checkOutDate,
-        nights,
+        nights, // 🔥 TRUYỀN SỐ ĐÊM QUA TRANG SAU
         room,
         adults,
         destination,
@@ -69,8 +97,10 @@ export default function ReserveScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ***** IMPORTANT: disable default header from expo-router / native stack ***** */}
       <Stack.Screen options={{ headerShown: false }} />
 
+      {/* Header custom của mày */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={26} color="#fff" />
@@ -83,6 +113,7 @@ export default function ReserveScreen() {
           Tại: {destination || "Địa điểm"}
         </Text>
 
+        {/* Check-in */}
         <TouchableOpacity
           onPress={() => setPickerType("checkin")}
           style={styles.input}
@@ -92,6 +123,7 @@ export default function ReserveScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Check-out */}
         <TouchableOpacity
           onPress={() => setPickerType("checkout")}
           style={styles.input}
@@ -108,6 +140,7 @@ export default function ReserveScreen() {
           onCancel={() => setPickerType(null)}
         />
 
+        {/* Adults & Room */}
         <View style={styles.peopleSection}>
           <View style={styles.peopleRow}>
             <Ionicons name="bed-outline" size={20} color="#333" />
@@ -149,6 +182,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: "#013687",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
   },
   backBtn: { marginRight: 100, padding: 4 },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#fff" },
@@ -198,5 +233,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
+
   buttonText: { color: "#fff", fontSize: 18, fontWeight: "600" },
 });

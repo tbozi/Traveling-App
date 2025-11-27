@@ -1,4 +1,4 @@
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,6 +10,8 @@ import { auth, db } from "../../js/config";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { redirectTo, hotelId } = useLocalSearchParams();
+
   const { setUserEmail, setUserName } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,11 +23,9 @@ export default function LoginScreen() {
     }
 
     try {
-      // Đăng nhập Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Lấy thêm thông tin từ Firestore
       const ref = doc(db, "users", user.uid);
       const snap = await getDoc(ref);
 
@@ -36,11 +36,18 @@ export default function LoginScreen() {
       }
 
       Alert.alert("Đăng nhập thành công!");
-      router.replace("/(tabs)");
 
+      if (redirectTo && hotelId) {
+        router.replace({
+          pathname: redirectTo as any,   // 🔥 FIX TYPE Ở ĐÂY
+          params: { id: hotelId },
+        });
+        return;
+      }
+
+      router.replace("/(tabs)");
     } catch (error: any) {
-      console.log("Login error:", error);
-      Alert.alert("Lỗi", error.message);
+      Alert.alert("Lỗi đăng nhập", error.message);
     }
   };
 

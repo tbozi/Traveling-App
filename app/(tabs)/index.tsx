@@ -147,11 +147,17 @@ export default function HomeScreen() {
             />
             {/* <Text style={styles.titleHeader}>GoJourney</Text> */}
           </View>
-          <Link href="/notifications" asChild>
+           <Link href="/(reserve)/ChatAIScreen" asChild>
             <TouchableOpacity>
-              <Ionicons name="notifications-outline" size={26} color="#fff" />
+              <Ionicons name="logo-android" size={40} style={{marginLeft:130}} color="#fff" />
             </TouchableOpacity>
           </Link>
+          <Link href="/notifications" asChild>
+            <TouchableOpacity>
+              <Ionicons name="notifications-outline" size={26} style={{marginLeft:-30}} color="#fff" />
+            </TouchableOpacity>
+          </Link>
+         
         </View>
 <ScrollView>
         {/* Search Bar */}
@@ -178,7 +184,7 @@ export default function HomeScreen() {
                   router.push("/search"); // trang Khách sạn placeholder
                 }
                 if (c.label === "Thuê xe") {
-                  router.push("/search"); // trang Thuê xe placeholder
+                  router.push("/(rent)/RentCarScreen"); // trang Thuê xe placeholder
                 }
               }}
             >
@@ -224,7 +230,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         />
       </ScrollView>
-<Link
+{/* <Link
   href="/(reserve)/ChatAIScreen"
   style={{
     backgroundColor: "#007bff",
@@ -236,7 +242,7 @@ export default function HomeScreen() {
   <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>
     Trò chuyện với AI
   </Text>
-</Link>
+</Link> */}
 
     </SafeAreaView>
   );

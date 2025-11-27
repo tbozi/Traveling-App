@@ -1,82 +1,137 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RentCarScreen() {
-  const [sameLocation, setSameLocation] = useState(true);
-  const [pickupDate, setPickupDate] = useState(new Date());
-  const [returnDate, setReturnDate] = useState(new Date());
-  const [showPickupPicker, setShowPickupPicker] = useState(false);
   const router = useRouter();
+
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [returnLocation, setReturnLocation] = useState("");
+  const [driverAge, setDriverAge] = useState("");
+
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [pickerType, setPickerType] = useState<"pickup" | "return" | null>(null);
+
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+
+  const handleConfirmDate = (date: Date) => {
+    if (!date) return;
+
+    const formatted = formatDate(date);
+
+    if (pickerType === "pickup") {
+      setPickupDate(formatted);
+    }
+
+    if (pickerType === "return") {
+      setReturnDate(formatted);
+    }
+
+    setPickerType(null);
+  };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
       <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["bottom"]}>
-        <ScrollView style={{ flex: 1 }}>
+       
+          {/* HEADER */}
           <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={26} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Thuê xe</Text>
-        </View> 
-
-
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={26} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Thuê xe</Text>
+          </View>
+ <ScrollView style={{ flex: 1 }}>
           <View style={styles.formContainer}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.formLabel}>Quay lại vị trí cũ</Text>
-              <Switch
-                value={sameLocation}
-                onValueChange={setSameLocation}
-                thumbColor="#fff"
-                trackColor={{ true: "#1E90FF", false: "#ccc" }}
+            {/* NHẬP ĐỊA ĐIỂM */}
+            <Text style={styles.label}>Địa điểm nhận xe</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="car-outline" size={22} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Nhập địa điểm..."
+                value={pickupLocation}
+                onChangeText={setPickupLocation}
               />
             </View>
 
-            <TouchableOpacity style={styles.inputRow}>
-              <Ionicons name="car-outline" size={22} />
-              <Text style={styles.inputText}>Địa điểm nhận xe</Text>
+            <Text style={styles.label}>Địa điểm trả xe</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="location-outline" size={22} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Nhập địa điểm..."
+                value={returnLocation}
+                onChangeText={setReturnLocation}
+              />
+            </View>
+
+            {/* NGÀY */}
+            <TouchableOpacity
+              style={styles.inputRow}
+              onPress={() => setPickerType("pickup")}
+            >
+              <Feather name="calendar" size={22} />
+              <Text style={styles.inputText}>
+                {pickupDate || "Chọn ngày nhận xe"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.inputRow}
-              onPress={() => setShowPickupPicker(true)}
+              onPress={() => setPickerType("return")}
             >
               <Feather name="calendar" size={22} />
               <Text style={styles.inputText}>
-                {pickupDate.toLocaleDateString()} – {returnDate.toLocaleDateString()}
+                {returnDate || "Chọn ngày trả xe"}
               </Text>
             </TouchableOpacity>
 
-            {showPickupPicker && (
-              <DateTimePicker
-                value={pickupDate}
-                mode="date"
-                onChange={(e, date) => {
-                  setShowPickupPicker(false);
-                  if (date) setPickupDate(date);
-                }}
-              />
-            )}
+            <DateTimePickerModal
+              isVisible={pickerType !== null}
+              mode="date"
+              onConfirm={handleConfirmDate}
+              onCancel={() => setPickerType(null)}
+            />
 
-            <TouchableOpacity style={styles.inputRow}>
+            {/* NHẬP ĐỘ TUỔI */}
+            <Text style={styles.label}>Độ tuổi tài xế</Text>
+            <View style={styles.inputRow}>
               <Feather name="user" size={22} />
-              <Text style={styles.inputText}>Độ tuổi tài xế: 30 – 65</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Ví dụ: 30"
+                keyboardType="numeric"
+                value={driverAge}
+                onChangeText={setDriverAge}
+              />
+            </View>
 
+            {/* NÚT TÌM */}
             <TouchableOpacity
               style={styles.searchBtn}
               onPress={() =>
                 router.push({
                   pathname: "/(rent)/CarSearchResultScreen",
                   params: {
-                    location: "Hồ Chí Minh",
-                    pickup: pickupDate.toISOString(),
-                    dropoff: returnDate.toISOString(),
+                    pickupLocation,
+                    returnLocation,
+                    pickupDate,
+                    returnDate,
+                    driverAge,
                   },
                 })
               }
@@ -85,16 +140,24 @@ export default function RentCarScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* LIST HÃNG */}
           <Text style={styles.sectionTitle}>Các hãng thuê xe được ưa chuộng</Text>
 
           <View style={styles.brandGrid}>
-            {["HONDA", "YAMAHA", "SUZUKI", "TOYOTA", "HUYNDAI", "VINFAST", "KIA", "FORD"].map(
-              (name, i) => (
-                <View key={i} style={styles.brandBox}>
-                  <Text style={styles.brandText}>{name}</Text>
-                </View>
-              )
-            )}
+            {[
+              "HONDA",
+              "YAMAHA",
+              "SUZUKI",
+              "TOYOTA",
+              "HUYNDAI",
+              "VINFAST",
+              "KIA",
+              "FORD",
+            ].map((name, i) => (
+              <View key={i} style={styles.brandBox}>
+                <Text style={styles.brandText}>{name}</Text>
+              </View>
+            ))}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -109,9 +172,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: "#013687",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ececec",
-    paddingTop:50,
+    paddingTop: 50,
   },
   backBtn: {
     marginRight: 115,
@@ -122,6 +183,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#fff",
   },
+
   formContainer: {
     margin: 16,
     padding: 16,
@@ -130,21 +192,28 @@ const styles = StyleSheet.create({
     borderColor: "#FFB800",
     backgroundColor: "#fff",
   },
-  rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  formLabel: { fontSize: 16, fontWeight: "600" },
+
+  label: { fontSize: 15, fontWeight: "600", marginTop: 10 },
+
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderColor: "#ddd",
   },
-  inputText: { marginLeft: 12, fontSize: 15 },
+
+  textInput: {
+    marginLeft: 10,
+    fontSize: 15,
+    flex: 1,
+  },
+
+  inputText: {
+    marginLeft: 12,
+    fontSize: 15,
+  },
+
   searchBtn: {
     backgroundColor: "#0E65B0",
     paddingVertical: 14,
@@ -152,13 +221,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
+
   searchBtnText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginTop: 20,
     marginLeft: 16,
   },
+
   brandGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

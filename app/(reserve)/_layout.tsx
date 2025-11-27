@@ -43,6 +43,9 @@ export default function ReserveLayout() {
         name="HotelBookingFormScreen"
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="ChatAIScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentScreent" options={{ headerShown: false }} />
     </Stack>
+    
   );
 }
