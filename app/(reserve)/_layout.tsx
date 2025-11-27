@@ -44,7 +44,7 @@ export default function ReserveLayout() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="ChatAIScreen" options={{ headerShown: false }} />
-      <Stack.Screen name="PaymentScreent" options={{ headerShown: false }} />
+      <Stack.Screen name="PaymentScreen" options={{ headerShown: false }} />
     </Stack>
     
   );
